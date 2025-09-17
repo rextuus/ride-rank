@@ -1,0 +1,15 @@
+<div{{ attributes }}>
+    <div class="rating d-inline-flex align-items-center">
+        {% for i in 1..max %}
+            {% if i <= value %}
+                {{ ux_icon('material-symbols:star', { style: 'color: #d4af37; width: 18px;' }) }}
+            {% else %}
+                {{ ux_icon('material-symbols:star-outline', { style: 'color: #d4af37; width: 18px;' }) }}
+            {% endif %}
+        {% endfor %}
+
+        {% if not interactive %}
+            <small class="ms-1">(Ø {{ value|number_format(1, ',', '.') }})</small>
+        {% endif %}
+    </div>
+</div>

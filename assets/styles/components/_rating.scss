@@ -1,0 +1,15 @@
+.rating {
+    display: inline-flex;
+    align-items: center;
+
+    svg {
+        width: 18px;
+        height: 18px;
+        color: #d4af37;
+    }
+
+    small {
+        font-size: 0.75rem;
+        color: #777;
+    }
+}

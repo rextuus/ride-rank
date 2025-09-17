@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('ranking') }}
+{% endblock %}
+
+
+{% block body %}
+    <h2 class="mb-3">Meine Bestenliste</h2>
+
+    {% for coaster in ranking %}
+        <div class="ranking-card d-flex align-items-center mb-3 p-3 shadow-sm rounded position-relative">
+            <!-- Bild + Badges -->
+            <div class="ranking-image-wrapper position-relative">
+                <img src="{{ coaster.image }}" alt="{{ coaster.name }}" class="ranking-image rounded">
+
+                <!-- Platzierungs-Badge -->
+                <div class="position-badge position-{{ loop.index }}">
+                    {{ loop.index }}
+                </div>
+
+                <!-- Gefahren-Badge -->
+                {% if coaster.ridden %}
+                    <span class="badge bg-success ridden-badge">Gefahren</span>
+                {% endif %}
+            </div>
+
+            <!-- Infos -->
+            <div class="ranking-info flex-grow-1 ms-3">
+                <h5 class="mb-1">{{ coaster.name }}</h5>
+                <div>{{ coaster.park }}</div>
+                <div><em>{{ coaster.country }}</em></div>
+
+                <!-- Bewertungen -->
+                <div class="stars avg-stars mt-2">
+                    {{ component('Rating', {'value': coaster.avgRating|round(0, 'floor')}) }}
+                </div>
+                <div class="stars own-stars mt-1">
+                    Deine: {{ component('Rating', {'value': coaster.ownRating|round(0, 'floor')}) }}
+                </div>
+
+                <!-- Stats -->
+                <div class="stats mt-2">
+                    <span class="stat-win">{{ ux_icon('subway:up-2') }} {{ coaster.wins }}</span>
+                    <span class="stat-loss">{{ ux_icon('subway:down-2') }} {{ coaster.losses }}</span>
+                </div>
+            </div>
+
+            <!-- Info-Button jetzt global oben rechts -->
+            <a href="{{ path('app_coaster_show', { id: loop.index }) }}"
+               class="btn btn-sm btn-info-circle info-top-right" title="Details">
+                {{ ux_icon('material-symbols:info-outline') }}
+            </a>
+        </div>
+    {% endfor %}
+{% endblock %}
+

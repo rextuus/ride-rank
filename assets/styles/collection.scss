@@ -1,0 +1,158 @@
+.collection-page {
+    padding-bottom: 80px; // Platz für Footer
+    background-color: #fff;
+
+    h2 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    // Filter & Sortieren Buttons
+    .collection-header {
+        display: flex;
+        gap: 0.6rem;
+        margin-bottom: 1.5rem;
+
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+
+            border-radius: 999px; // pill shape
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 0.45rem 1rem;
+
+            border: 1px solid #3a2a1a;
+            background-color: #fff;
+            color: #3a2a1a;
+
+            .icon {
+                width: 18px;
+                height: 18px;
+                stroke: currentColor;
+            }
+
+            &:hover {
+                background-color: #faf6f0;
+            }
+
+            &:active {
+                background-color: #e2d8c7;
+            }
+
+            &.active {
+                background-color: #3a2a1a;
+                color: #fff;
+
+                .icon {
+                    stroke: #fff;
+                }
+            }
+        }
+    }
+
+
+
+    // Park-Sektion
+    .park-section {
+        margin-bottom: 2rem;
+
+        .park-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            svg {
+                width: 20px;
+                height: 20px;
+                stroke: #3a2a1a;
+            }
+        }
+    }
+
+    // Karten-Grid
+    .coaster-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.8rem;
+
+        .coaster-card {
+            background-color: #faf6f0;
+            border: 1px solid #e2d8c7;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            img {
+                height: 250px;
+                object-fit: cover;
+                width: 100%;
+                border-bottom: 1px solid #e2d8c7;
+            }
+
+            .card-body {
+                padding: 0.6rem;
+                text-align: center;
+
+                .card-title {
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    margin-bottom: 0.2rem;
+                }
+
+                .card-text {
+                    font-size: 0.75rem;
+                    color: #666;
+
+                    em {
+                        color: #7a6f66;
+                        font-style: italic;
+                    }
+                }
+            }
+
+            // Badge für "Gefahren"
+            .badge {
+                position: absolute;
+                top: 6px;
+                right: 6px;
+                font-size: 0.65rem;
+                font-weight: 600;
+                background-color: #2e8b57;
+                color: #fff;
+                border-radius: 6px;
+                padding: 0.2rem 0.4rem;
+            }
+
+            // Sterne-Bewertung
+            .stars {
+                text-align: center;
+                margin: 0.4rem 0;
+
+                .star {
+                    width: 18px;
+                    height: 18px;
+                    vertical-align: middle;
+                    fill: #ccc !important;   // leere Sterne grau
+                    color: #ccc;             // Fallback für currentColor
+                }
+
+                .star.filled {
+                    fill: #d4a017 !important; // gold
+                    color: #d4a017;           // Fallback für currentColor
+                }
+            }
+
+
+        }
+    }
+}

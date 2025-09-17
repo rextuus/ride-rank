@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Achterbahn Karten{% endblock %}</title>
+
+    {# globale Styles aus app.scss #}
+    {{ encore_entry_link_tags('app') }}
+
+    {# seiten-spezifische Styles #}
+    {% block stylesheets %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+{% include 'includes/_header.html.twig' %}
+
+<main class="flex-fill container py-4">
+    {% block body %}{% endblock %}
+</main>
+
+{% include 'includes/_footer.html.twig' %}
+
+{{ encore_entry_script_tags('app') }}
+{% block javascripts %}{% endblock %}
+</body>
+</html>

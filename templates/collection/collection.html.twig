@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ encore_entry_link_tags('collection') }}
+{% endblock %}
+
+{% block body %}
+    <div class="collection-page">
+        <h2 class="mb-3">Meine Sammlung</h2>
+
+        {% set activeFilter = false %}
+        {% set activeSort = true %}
+
+        <div class="collection-header">
+            <button class="btn btn-filter {{ activeFilter ? 'active' }}">
+                {{ ux_icon('material-symbols:filter-alt-outline', {class: 'icon'}) }}
+                <span>Filter</span>
+            </button>
+            <button class="btn btn-sort {{ activeSort ? 'active' }}">
+                {{ ux_icon('material-symbols:sort', {class: 'icon'}) }}
+                <span>Sortieren</span>
+            </button>
+        </div>
+
+        {% for park, coasters in coastersByPark %}
+            <div class="park-section">
+                <div class="park-title">
+                    {{ ux_icon('tabler:rollercoaster', {style: 'height: 20px;'}) }}
+                    {{ park }}
+                </div>
+
+                <div class="coaster-grid">
+                    {% for coaster in coasters %}
+                        <div class="coaster-card position-relative">
+                            <img src="{{ coaster.image }}" alt="{{ coaster.name }}">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ coaster.name }}</h5>
+                                <p class="card-text">{{ coaster.park }}<br><em>{{ coaster.country }}</em></p>
+                            </div>
+                            {% if coaster.ridden %}
+                                <span class="badge">Gefahren</span>
+                            {% endif %}
+                            <div class="stars">
+                                {{ component('Rating', {'value': coaster.rating|round(0, 'floor')}) }}
+                            </div>
+
+                            <div class="mb-5">
+                            {# Info-Button oben rechts auf der Card #}
+                            <a href="{{ path('app_coaster_show', { id: loop.index }) }}"
+                               class="btn btn-sm btn-info-circle info-top-right" title="Details">
+                                {{ ux_icon('material-symbols:info-outline') }}
+                            </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}

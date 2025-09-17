@@ -1,0 +1,42 @@
+// Bootstrap zuerst
+@import "~bootstrap/scss/bootstrap";
+
+// Globale Variablen und Layout
+@import "variables";
+@import "layout";
+@import "components/rating";
+@import "components/ratings";
+@import "pages/coaster-detail";
+// Seiten
+//@import "compare";
+//@import "collection";
+//@import "ranking";
+
+.btn-info-circle {
+    background-color: #3a2a1a;
+    color: #fff;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+
+    svg {
+        width: 20px;
+        height: 20px;
+        stroke: currentColor;
+    }
+
+    &:hover {
+        background-color: #2a1c12;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+}
+
+.btn-info-circle.info-top-right {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+}

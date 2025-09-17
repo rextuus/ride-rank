@@ -1,0 +1,64 @@
+// Vergleichsseite (Coaster-Vergleich)
+@import "app";
+
+.coaster-card {
+    background-color: $brand-light;
+    border: 1px solid $brand-border;
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+
+    img {
+        border-bottom: 1px solid $brand-border;
+        object-fit: cover;
+        height: 300px;
+    }
+
+    .card-body {
+        padding: 0.75rem;
+    }
+
+    .card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .card-text {
+        font-size: 0.8rem;
+        color: #555;
+
+        em {
+            color: #7a6f66;
+            font-style: italic;
+        }
+    }
+}
+
+// Choice Buttons
+.btn-choice {
+    border-radius: 999px; // pill-Form
+    font-size: 1rem;
+    padding: 0.6rem 1.4rem;
+    min-width: 100px;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+.btn-filled {
+    background-color: $brand-dark;
+    color: #fff;
+}
+
+.btn-outlined {
+    border-color: $brand-dark;
+}

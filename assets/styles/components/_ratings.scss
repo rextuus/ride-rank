@@ -1,0 +1,30 @@
+.rating-box {
+    background-color: #fff;
+    border: 1px solid #e2d8c7;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    padding: 1rem;
+
+    h5 {
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    button {
+        font-size: 0.8rem;
+    }
+
+    .category-ratings {
+        font-size: 0.9rem;
+
+        .d-flex {
+            border-bottom: 1px solid #f0ebe4;
+            padding-bottom: 0.4rem;
+            margin-bottom: 0.4rem;
+
+            &:last-child {
+                border-bottom: none;
+            }
+        }
+    }
+}

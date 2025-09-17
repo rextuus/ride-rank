@@ -1,0 +1,84 @@
+.coaster-detail-card {
+    background-color: #faf6f0; // leicht getönt, wie deine Karten
+    border: 1px solid #e2d8c7;
+    border-radius: 14px;
+    padding: 1rem;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+
+    .badge {
+        font-size: 1.5rem;
+        top: 1px;
+        right: 1px;
+    }
+
+    img {
+        border-radius: 100px;
+        object-fit: cover;
+        width: 100%;
+        //max-height: 500px;
+    }
+
+    h5 {
+        margin-top: 1rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 0.3rem;
+        margin-bottom: 0.6rem;
+    }
+
+    ul {
+        margin: 0;
+        padding-left: 0;
+
+        li {
+            padding: 0.2rem 0;
+            font-size: 0.9rem;
+            color: #444;
+
+            strong {
+                color: #2d2d2d;
+            }
+        }
+    }
+
+    .rating-box {
+        background-color: #fff;
+        border: 1px solid #e2d8c7;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+
+        h5 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .category-ratings {
+            font-size: 0.9rem;
+
+            .d-flex {
+                border-bottom: 1px solid #f0ebe4;
+                padding-bottom: 0.4rem;
+                margin-bottom: 0.4rem;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+            }
+        }
+    }
+
+}
+
+.btn-success {
+    border-radius: 999px; // pill shape
+    padding: 0.7rem 1rem;
+    font-weight: 600;
+    background-color: #3a2a1a;
+    border: none;
+
+    &:hover {
+        background-color: #2a1d12;
+    }
+}

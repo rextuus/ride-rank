@@ -1,0 +1,42 @@
+<div{{ attributes }}>
+    <div class="row g-3">
+        <div class="col-6">
+            <div class="card coaster-card shadow-sm h-100 text-center">
+                <img src="{{ this.left.image }}" class="card-img-top" alt="{{ this.left.name }}">
+                <div class="card-body p-2">
+                    <h5 class="card-title mb-1">{{ this.left.name }}</h5>
+                    <p class="card-text small mb-0">{{ this.left.park }}<br><em>{{ this.left.country }}</em></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6">
+            <div class="card coaster-card shadow-sm h-100 text-center">
+                <img src="{{ this.right.image }}" class="card-img-top" alt="{{ this.right.name }}">
+                <div class="card-body p-2">
+                    <h5 class="card-title mb-1">{{ this.right.name }}</h5>
+                    <p class="card-text small mb-0">{{ this.right.park }}<br><em>{{ this.right.country }}</em></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
+        <button data-action="live#action" data-live-action-param="chooseLeft"
+                class="btn btn-lg btn-choice btn-outline-dark flex-fill">
+            <i>{{ ux_icon('icons8:left-round', {style: 'height: 1.5em;'}) }}</i> Links
+        </button>
+
+        <button data-action="live#action" data-live-action-param="skip"
+                class="btn btn-lg btn-choice btn-outline-secondary btn-filled flex-fill">
+            <i>{{ ux_icon('material-symbols:refresh', {style: 'height: 1.5em;'}) }}</i> Skip
+        </button>
+
+        <button data-action="live#action" data-live-action-param="chooseRight"
+                class="btn btn-lg btn-choice btn-outline-dark flex-fill">
+            Rechts <i>{{ ux_icon('icons8:right-round', {style: 'height: 1.5em;'}) }}</i>
+        </button>
+    </div>
+
+
+</div>

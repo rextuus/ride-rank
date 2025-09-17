@@ -1,0 +1,84 @@
+.ranking-card {
+    background-color: #faf6f0;
+    border: 1px solid #e2d8c7;
+    border-radius: 14px;
+}
+
+.ranking-image-wrapper {
+    position: relative;
+    display: inline-block;
+
+    .ranking-image {
+        width: 130px;
+        height: 190px;
+        object-fit: cover;
+        border-radius: 10px;
+        display: block;
+    }
+
+    .position-badge {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        font-size: 0.9rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+    }
+
+    .position-1 { background: gold; color: #000; }
+    .position-2 { background: silver; color: #000; }
+    .position-3 { background: #cd7f32; color: #fff; }
+    .position-4,
+    .position-5 { background: #7a6f66; }
+
+    .ridden-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+}
+
+
+.ranking-info {
+    font-size: 0.9rem;
+
+    .stars {
+        gap: 1px;
+
+        svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        small {
+            font-size: 0.7rem;
+        }
+    }
+
+    .stats {
+        font-size: 0.75rem;
+        margin-top: 0.2rem;
+    }
+}
+
+
+.ranking-info {
+    .stats {
+        font-size: 0.8rem;
+        display: flex;
+        gap: 1rem;
+
+        .stat-win { color: #2d8659; font-weight: 500; }
+        .stat-loss { color: #a94442; font-weight: 500; }
+    }
+}
+
+

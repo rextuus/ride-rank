@@ -1,0 +1,45 @@
+<div{{ attributes }}>
+    <div class="rating-box p-3 rounded">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5>Bewertungen</h5>
+            <button class="btn btn-sm btn-outlined" data-action="live#action" data-live-action-param="toggle">
+                {% if mode == 'general' %}
+                    Eigene Bewertungen
+                {% else %}
+                    Allgemeine Bewertungen
+                {% endif %}
+            </button>
+        </div>
+
+        {% if mode == 'general' %}
+            <div class="mb-2">
+                {{ component('Rating', {'value': avgRating}) }}
+                <small class="ms-1">(Durchschnitt)</small>
+            </div>
+
+            <div class="category-ratings">
+                {% for category, rating in avgCategories %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>{{ category }}</span>
+                        {{ component('Rating', {'value': rating, 'interactive': true}) }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="mb-2">
+                {{ component('Rating', {'value': userRating}) }}
+                <small class="ms-1">(Deine Gesamtbewertung)</small>
+            </div>
+
+            <div class="category-ratings">
+                {% for category, rating in userCategories %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>{{ category }}</span>
+                        {{ component('Rating', {'value': rating, 'interactive': true}) }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+</div>
