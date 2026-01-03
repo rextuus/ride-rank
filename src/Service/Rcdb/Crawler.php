@@ -51,7 +51,8 @@ class Crawler
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
-        private readonly LoggerInterface $logger = new NullLogger()
+        private readonly LoggerInterface $logger = new NullLogger(),
+        private ?ErrorSummaryService $errorSummary = null
     ) {
     }
 
@@ -65,7 +66,7 @@ class Crawler
         $this->logger->info('Fetching roller coaster data', ['id' => $id, 'url' => $url]);
 
         try {
-            return $this->fetchAndParseUrl($url);
+            return $this->fetchAndParseUrl($url, $id);
         } catch (Exception $e) {
             $this->logger->error('Failed to fetch roller coaster data', [
                 'id' => $id,
@@ -80,7 +81,7 @@ class Crawler
      * @return array<string, mixed>
      * @throws RuntimeException
      */
-    private function fetchAndParseUrl(string $url): array
+    private function fetchAndParseUrl(string $url, int $id): array
     {
         try {
             $response = $this->httpClient->request('GET', $url);
@@ -89,7 +90,7 @@ class Crawler
             $this->logger->debug('Successfully fetched content', ['url' => $url]);
 
 
-            return  $this->parseContent($content);
+            return  $this->parseContent($content, $id);
 
         } catch (ExceptionInterface $e) {
             $this->logger->error('HTTP request failed', [
@@ -110,7 +111,7 @@ class Crawler
      * @return array<string, mixed>
      * @throws RuntimeException
      */
-    private function parseContent(string $content): array
+    private function parseContent(string $content, int $id): array
     {
         try {
             $domCrawler = new DomCrawler($content);
@@ -126,9 +127,11 @@ class Crawler
                     $this->logger->debug('Extracted name', ['name' => $data['name']]);
                 } else {
                     $this->logger->warning('Name element not found');
+                    $this->errorSummary?->logError($id, 'Name element not found');
                 }
             } catch (Exception $e) {
                 $this->logger->warning('Failed to extract name', ['error' => $e->getMessage()]);
+                $this->errorSummary?->logError($id, 'Failed to extract name: ' . $e->getMessage());
             }
 
             // Extract location
@@ -158,9 +161,11 @@ class Crawler
                     $this->logger->debug('Extracted location', ['location' => $data['location']]);
                 } else {
                     $this->logger->warning('Location elements not found');
+                    $this->errorSummary?->logError($id, 'Location elements not found');
                 }
             } catch (Exception $e) {
                 $this->logger->warning('Failed to extract location', ['error' => $e->getMessage()]);
+                $this->errorSummary?->logError($id, 'Failed to extract location: ' . $e->getMessage());
             }
 
             // Extract status
@@ -171,9 +176,11 @@ class Crawler
                     $this->logger->debug('Extracted status', ['status' => $data['status']]);
                 } else {
                     $this->logger->warning('Status element not found');
+                    $this->errorSummary?->logError($id, 'Status element not found');
                 }
             } catch (Exception $e) {
                 $this->logger->warning('Failed to extract status', ['error' => $e->getMessage()]);
+                $this->errorSummary?->logError($id, 'Failed to extract status: ' . $e->getMessage());
             }
 
             // Extract categories
@@ -205,9 +212,11 @@ class Crawler
                     $this->logger->debug('Extracted categories', ['count' => count($data['categories'])]);
                 } else {
                     $this->logger->warning('Category elements not found');
+                    $this->errorSummary?->logError($id, 'Category elements not found');
                 }
             } catch (Exception $e) {
                 $this->logger->warning('Failed to extract categories', ['error' => $e->getMessage()]);
+                $this->errorSummary?->logError($id, 'Failed to extract categories: ' . $e->getMessage());
             }
 
             // Extract manufacturer
@@ -221,12 +230,13 @@ class Crawler
                 }
             } catch (Exception $e) {
                 $this->logger->warning('Failed to extract manufacturer', ['error' => $e->getMessage()]);
+                $this->errorSummary?->logError($id, 'Failed to extract manufacturer: ' . $e->getMessage());
             }
 
             // Extract specifications
             try {
                 $specSections = $domCrawler->filter('section');
-                $specSections->each(function (DomCrawler $section) use (&$data) {
+                $specSections->each(function (DomCrawler $section) use (&$data, $id) {
                     try {
                         $heading = $section->filter('h3');
                         if ($heading->count() > 0) {
@@ -236,11 +246,15 @@ class Crawler
                             switch ($sectionName) {
                                 case 'Tracks':
                                     $trackData = $this->extractTableData($section);
-                                    $elements = new DomCrawler($trackData['Elements']);
-
-                                    $parsedElements = $this->getParsedElements($elements);
-                                    $data['tracks'] = $this->extractTableData($section);
-                                    $data['tracks']['Elements'] = $parsedElements;
+                                    $data['tracks'] = $trackData;
+                                    
+                                    if (isset($trackData['Elements'])) {
+                                        $elements = new DomCrawler($trackData['Elements']);
+                                        $parsedElements = $this->getParsedElements($elements);
+                                        $data['tracks']['Elements'] = $parsedElements;
+                                    } else {
+                                        $data['tracks']['Elements'] = [];
+                                    }
                                     break;
                                 case 'Züge':
                                 case 'Trains':
@@ -251,7 +265,6 @@ class Crawler
                                     $data['trains']['Restraints'] = [];
                                     if (isset($trainData['Restraints'])) {
                                         $restraints = new DomCrawler($trainData['Restraints']);
-                                        $manufacturer = new DomCrawler($trainData['Built by']);
 
                                         $parsedRestraints = [];
                                         $restraints->filter('a')->each(function (DomCrawler $node) use (&$parsedRestraints) {
@@ -274,6 +287,7 @@ class Crawler
 
                                     $data['trains']['Built by'] = [];
                                     if (isset($trainData['Built by'])) {
+                                        $manufacturer = new DomCrawler($trainData['Built by']);
                                         $parsedManufacturer = $this->getParsedElements($manufacturer);
 
                                         $data['trains']['Built by'] = $parsedManufacturer;
@@ -297,10 +311,12 @@ class Crawler
                         }
                     } catch (Exception $e) {
                         $this->logger->warning('Failed to process section', ['error' => $e->getMessage()]);
+                        $this->errorSummary?->logError($id, 'Failed to process section: ' . $e->getMessage());
                     }
                 });
             } catch (Exception $e) {
                 $this->logger->warning('Failed to extract specifications', ['error' => $e->getMessage()]);
+                $this->errorSummary?->logError($id, 'Failed to extract specifications: ' . $e->getMessage());
             }
 
 
@@ -313,7 +329,7 @@ class Crawler
 
                 $images['default'] = null;
                 $images['images'] = null;
-                if (isset($picJson['pictures'])){
+                if (isset($picJson['pictures']) && !empty($picJson['pictures'])){
                     $pictures = $picJson['pictures'];
                     $images['default'] = 'https://rcdb.com' . $pictures[0]['url'];
                 }
@@ -321,6 +337,7 @@ class Crawler
                 $data['images'] = $images;
             } catch (Exception $e) {
                 $this->logger->warning('Failed to extract images', ['error' => $e->getMessage()]);
+                $this->errorSummary?->logError($id, 'Failed to extract images: ' . $e->getMessage());
             }
 
 
@@ -328,6 +345,7 @@ class Crawler
             return $data;
         } catch (Exception $e) {
             $this->logger->error('Failed to parse HTML content', ['error' => $e->getMessage()]);
+            $this->errorSummary?->logError($id, 'Failed to parse HTML content: ' . $e->getMessage());
             throw new RuntimeException(sprintf('Failed to parse HTML content: %s', $e->getMessage()), 0, $e);
         }
     }

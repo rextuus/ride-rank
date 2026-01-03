@@ -2,7 +2,10 @@
 
 namespace App\Command;
 
+use App\Entity\Coaster;
+use App\Common\Entity\Enum\LocationType;
 use App\Service\Rcdb\Crawler;
+use App\Service\Rcdb\ImportService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -17,8 +20,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class TestCrawlerCommand extends Command
 {
-    public function __construct(private readonly Crawler $crawler)
-    {
+    public function __construct(
+        private readonly Crawler $crawler,
+        private readonly ImportService $importService
+    ) {
         parent::__construct();
     }
 
@@ -41,7 +46,13 @@ class TestCrawlerCommand extends Command
 
         try {
             $data = $this->crawler->fetchRollerCoaster($id);
-dd($data);
+            
+            $coaster = $this->importService->importFromCrawlerArray($id, $data);
+            
+            $io->success(sprintf('Coaster "%s" (ID: %d) imported successfully', $coaster->getName(), $coaster->getId()));
+
+            return Command::SUCCESS;
+
             // Display basic information
             if (isset($data['name'])) {
                 $io->section('Basic Information');
@@ -139,5 +150,126 @@ dd($data);
         }
 
         return Command::SUCCESS;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function parseResponse(array $data): void
+    {
+        $name = $data['name'];
+        $status = $data['status'];
+        $manufacturerName = $data['manufacturer'];
+        $images = $data['images'];
+
+        $coaster = new Coaster();
+        $coaster->setIdent($name);
+        $coaster->setName($name);
+        $coaster->setStatus($status);
+
+        // Manufacturer
+        $manufacturer = new Manufacturer();
+        $manufacturer->setName($manufacturerName);
+        $coaster->setManufacturer($manufacturer);
+
+        // Images
+        $coaster->setImages($images['rcdb_json']);
+        $coaster->setRcdbImageUrl($images['default']);
+
+        // Locations
+        if (isset($data['location'])) {
+            foreach ($data['location'] as $locData) {
+                $location = new Location();
+                $location->setName($locData['ident']);
+                $location->setRcdbId($locData['id']);
+                $location->setRcdbUrl($locData['url']);
+                $coaster->addLocation($location);
+            }
+        }
+
+        // Categories
+        if (isset($data['categories'])) {
+            foreach ($data['categories'] as $catData) {
+                $category = new Category();
+                $category->setName($catData['ident']);
+                if ($catData['id']) {
+                    $category->setRcdbId($catData['id']);
+                }
+                $category->setRcdbUrl($catData['url']);
+                $coaster->addCategory($category);
+            }
+        }
+
+        // Track
+        if (isset($data['tracks'])) {
+            $track = new Track();
+            $tData = $data['tracks'];
+
+            // Helper to extract float from strings like "1276.3 ft"
+            $extractFloat = function ($val) {
+                if (!$val) return null;
+                preg_match('/[0-9.]+/', $val, $matches);
+                return isset($matches[0]) ? (float)$matches[0] : null;
+            };
+
+            $track->setLength($extractFloat($tData['Length'] ?? null));
+            $track->setHeight($extractFloat($tData['Height'] ?? null));
+            $track->setSpeed($extractFloat($tData['Speed'] ?? null));
+            $track->setInversions((int)($tData['Inversions'] ?? 0));
+            $track->setVerticalAngle((int)($extractFloat($tData['Vertical Angle'] ?? null)));
+
+            if (isset($tData['Elements'])) {
+                foreach ($tData['Elements'] as $index => $elData) {
+                    $element = new TrackElement();
+                    $element->setName($elData['ident']);
+                    $element->setRcdbId($elData['id']);
+                    $element->setRcdbUrl($elData['url']);
+                    $element->setPosition($index);
+                    $track->addElement($element);
+                }
+            }
+            $coaster->setTrack($track);
+        }
+
+        // Trains
+        if (isset($data['trains'])) {
+            $train = new Train();
+            $trData = $data['trains'];
+            $train->setArrangement($trData['Arrangement'] ?? null);
+
+            if (!empty($trData['Built by'])) {
+                $builderData = $trData['Built by'][0]; // Take the first one for simplicity
+                $builder = new Manufacturer();
+                $builder->setName($builderData['ident']);
+                $builder->setRcdbId($builderData['id']);
+                $builder->setRcdbUrl($builderData['url']);
+                $train->setBuiltBy($builder);
+            }
+
+            // Restraints are problematic because they are currently linked to Location
+            // But for now we just show we have a place for them
+            if (!empty($trData['Restraints'])) {
+                $restraintData = $trData['Restraints'][0];
+                $restraint = new Location();
+                $restraint->setName($restraintData['ident']);
+                $restraint->setRcdbId($restraintData['id']);
+                $restraint->setType(LocationType::NOT_DETERMINED);
+                $train->setRestraint($restraint);
+            }
+
+            $coaster->setTrain($train);
+        }
+
+        // Details, Facts, History
+        foreach (['details' => 'detail', 'facts' => 'fact', 'history' => 'history'] as $key => $type) {
+            if (isset($data[$key])) {
+                foreach ($data[$key] as $content) {
+                    $detail = new Detail();
+                    $detail->setContent($content);
+                    $detail->setType($type);
+                    $coaster->addDetail($detail);
+                }
+            }
+        }
     }
 }
