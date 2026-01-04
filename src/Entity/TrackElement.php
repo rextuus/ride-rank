@@ -12,36 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\HasLifecycleCallbacks]
 class TrackElement
 {
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $ident = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $name = null;
-
-    public function getIdent(): ?string
-    {
-        return $this->ident;
-    }
-
-    public function setIdent(string $ident): static
-    {
-        $this->ident = $ident;
-
-        return $this;
-    }
-
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
-
-    public function setName(string $name): static
-    {
-        $this->name = $name;
-
-        return $this;
-    }
-
+    use IdentTrait;
     use RcdbEntityTrait;
     use CreateDateTrait;
 
@@ -53,9 +24,6 @@ class TrackElement
     #[ORM\ManyToOne(inversedBy: 'elements')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Track $track = null;
-
-    #[ORM\Column(nullable: true)]
-    private ?int $position = null;
 
     public function getId(): ?int
     {
@@ -70,18 +38,6 @@ class TrackElement
     public function setTrack(?Track $track): static
     {
         $this->track = $track;
-
-        return $this;
-    }
-
-    public function getPosition(): ?int
-    {
-        return $this->position;
-    }
-
-    public function setPosition(?int $position): static
-    {
-        $this->position = $position;
 
         return $this;
     }

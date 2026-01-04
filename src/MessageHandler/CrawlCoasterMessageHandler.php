@@ -43,6 +43,7 @@ final readonly class CrawlCoasterMessageHandler
 
             $this->logger->info(sprintf('Successfully crawled coaster ID %d (Dry run: %s)', $id, $message->isDryRun() ? 'yes' : 'no'));
         } catch (\Exception $e) {
+            dd($e);
             $this->errorSummary->logError($id, $e->getMessage());
             $this->logger->error(sprintf('Failed to crawl coaster ID %d: %s', $id, $e->getMessage()));
         }

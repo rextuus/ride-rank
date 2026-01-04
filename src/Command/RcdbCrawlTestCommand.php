@@ -54,7 +54,7 @@ class RcdbCrawlTestCommand extends Command
             $this->messageBus->dispatch(new CrawlCoasterMessage($id, $dryRun));
             
             if ($id < $start + $limit - 1) {
-                $delay = rand(0, 1);
+                $delay = rand(6, 10);
                 $io->writeln(sprintf('Waiting %d seconds before next dispatch...', $delay));
                 sleep($delay);
             }

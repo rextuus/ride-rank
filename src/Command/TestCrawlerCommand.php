@@ -4,6 +4,9 @@ namespace App\Command;
 
 use App\Entity\Coaster;
 use App\Common\Entity\Enum\LocationType;
+use App\Entity\Manufacturer;
+use App\Entity\Track;
+use App\Entity\TrackElement;
 use App\Service\Rcdb\Crawler;
 use App\Service\Rcdb\ImportService;
 use Symfony\Component\Console\Attribute\AsCommand;

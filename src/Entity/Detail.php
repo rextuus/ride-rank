@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Common\Entity\Trait\CreateDateTrait;
+use App\Common\Entity\Trait\IdentTrait;
 use App\Enum\DetailType;
 use App\Repository\DetailRepository;
 use Doctrine\ORM\Mapping as ORM;
@@ -12,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 class Detail
 {
     use CreateDateTrait;
+    use IdentTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

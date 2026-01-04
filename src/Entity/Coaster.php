@@ -57,7 +57,7 @@ class Coaster
     /**
      * @var Collection<int, Detail>
      */
-    #[ORM\OneToMany(targetEntity: Detail::class, mappedBy: 'coaster', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Detail::class, mappedBy: 'coaster', orphanRemoval: true, cascade: ['persist'])]
     private Collection $details;
 
     public function __construct()

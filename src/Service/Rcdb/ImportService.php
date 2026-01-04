@@ -23,11 +23,10 @@ use App\Entity\Train;
 use App\Enum\DetailType;
 use Doctrine\ORM\EntityManagerInterface;
 
-class ImportService
+readonly class ImportService
 {
-    public function __construct(
-        private readonly EntityManagerInterface $entityManager
-    ) {
+    public function __construct(private EntityManagerInterface $entityManager)
+    {
     }
 
     /**
@@ -120,45 +119,48 @@ class ImportService
 
     private function importCoaster(RollerCoasterData $dto, bool $dryRun = false): Coaster
     {
-        $coaster = new Coaster();
+        $coaster = $this->entityManager->getRepository(Coaster::class)->findOneBy(['rcdbId' => $dto->rcdbId]);
+        if (!$coaster) {
+            $coaster = new Coaster();
+            $coaster->setRcdbId($dto->rcdbId);
+        }
+
         $coaster->setName($dto->name);
         $coaster->setIdent($dto->name); // Assuming ident is name for now
         $coaster->setStatus($dto->status);
         $coaster->setImages($dto->images->rcdbJson);
         $coaster->setRcdbImageUrl($dto->images->defaultUrl);
-        $coaster->setRcdbId($dto->rcdbId);
 
-        if ($dto->manufacturer) {
+        $manufacturerName = $dto->manufacturer ?: 'Unknown Manufacturer';
+        $manufacturer = $this->entityManager->getRepository(Manufacturer::class)->findOneBy(
+            ['ident' => $manufacturerName]
+        );
+        if (!$manufacturer) {
             $manufacturer = $this->entityManager->getRepository(Manufacturer::class)->findOneBy(
-                ['name' => $dto->manufacturer]
+                ['name' => $manufacturerName]
             );
-            if (!$manufacturer) {
-                $manufacturer = new Manufacturer();
-                $manufacturer->setName($dto->manufacturer);
-                if (!$dryRun) {
-                    $this->entityManager->persist($manufacturer);
-                }
-            }
-            $coaster->setManufacturer($manufacturer);
-        } else {
-            $manufacturer = $this->entityManager->getRepository(Manufacturer::class)->findOneBy(
-                ['name' => 'Unknown Manufacturer']
-            );
-            if (!$manufacturer) {
-                $manufacturer = new Manufacturer();
-                $manufacturer->setName('Unknown Manufacturer');
-                if (!$dryRun) {
-                    $this->entityManager->persist($manufacturer);
-                }
-            }
-            $coaster->setManufacturer($manufacturer);
         }
+
+        if (!$manufacturer) {
+            $manufacturer = new Manufacturer();
+            $manufacturer->setName($manufacturerName);
+            $manufacturer->setIdent($manufacturerName);
+            if (!$dryRun) {
+                $this->entityManager->persist($manufacturer);
+            }
+        }
+        $coaster->setManufacturer($manufacturer);
 
         foreach ($dto->location as $index => $locData) {
             $location = $this->entityManager->getRepository(Location::class)->findOneBy(['rcdbId' => $locData->id]);
             if (!$location) {
+                $location = $this->entityManager->getRepository(Location::class)->findOneBy(['ident' => $locData->ident]);
+            }
+
+            if (!$location) {
                 $location = new Location();
                 $location->setName($locData->ident);
+                $location->setIdent($locData->ident);
                 $location->setRcdbId($locData->id);
                 $location->setRcdbUrl($locData->url);
 
@@ -176,7 +178,9 @@ class ImportService
                     $this->entityManager->persist($location);
                 }
             }
-            $coaster->addLocation($location);
+            if (!$coaster->getLocations()->contains($location)) {
+                $coaster->addLocation($location);
+            }
         }
 
         foreach ($dto->categories as $catData) {
@@ -184,9 +188,19 @@ class ImportService
             if ($catData->id) {
                 $category = $this->entityManager->getRepository(Category::class)->findOneBy(['rcdbId' => $catData->id]);
             }
+
+            if (!$category) {
+                $category = $this->entityManager->getRepository(Category::class)->findOneBy(['ident' => $catData->ident]);
+            }
+
+            if (!$category) {
+                $category = $this->entityManager->getRepository(Category::class)->findOneBy(['name' => $catData->ident]);
+            }
+
             if (!$category) {
                 $category = new Category();
                 $category->setName($catData->ident);
+                $category->setIdent($catData->ident);
                 if ($catData->id) {
                     $category->setRcdbId($catData->id);
                 }
@@ -195,11 +209,13 @@ class ImportService
                     $this->entityManager->persist($category);
                 }
             }
-            $coaster->addCategory($category);
+            if (!$coaster->getCategories()->contains($category)) {
+                $coaster->addCategory($category);
+            }
         }
 
         if ($dto->track) {
-            $track = new Track();
+            $track = $coaster->getTrack() ?: new Track();
             $track->setLength($dto->track->length);
             $track->setHeight($dto->track->height);
             $track->setDrop($dto->track->drop);
@@ -208,31 +224,60 @@ class ImportService
             $track->setDuration($dto->track->duration);
             $track->setVerticalAngle($dto->track->verticalAngle);
 
+            // For simplicity, we clear elements and re-add them to handle position changes easily
+            // In a real scenario, we might want to update existing ones.
+            foreach ($track->getElements() as $element) {
+                $track->removeElement($element);
+            }
+
+            $addedElements = [];
             foreach ($dto->track->elements as $index => $elData) {
-                $element = new TrackElement();
-                $element->setName($elData->ident);
-                $element->setIdent($elData->ident);
-                if ($elData->id) {
-                    $element->setRcdbId($elData->id);
+                $ident = trim(strtolower($elData->ident));
+                $element = null;
+
+                if (array_key_exists($ident, $addedElements)) {
+                    $element = $addedElements[$ident];
                 }
-                $element->setRcdbUrl($elData->url);
-                $element->setPosition($index + 1);
+
+                if (!$element) {
+                    $element = $this->entityManager->getRepository(TrackElement::class)->findOneBy(['rcdbId' => $elData->id]);
+                }
+
+                if (!$element) {
+                    $element = $this->entityManager->getRepository(TrackElement::class)->findOneBy(['ident' => $ident]);
+                }
+
+                if (!$element) {
+                    $element = new TrackElement();
+                    $element->setName($elData->ident);
+                    $element->setIdent($ident);
+                    if ($elData->id) {
+                        $element->setRcdbId($elData->id);
+                    }
+                    $element->setRcdbUrl($elData->url);
+                    if (!$dryRun) {
+                        $this->entityManager->persist($element);
+                    }
+                }
+
+                $addedElements[$ident] = $element;
+
                 $track->addElement($element);
             }
             $coaster->setTrack($track);
         }
 
         if ($dto->train) {
-            $train = new Train();
+            $train = $coaster->getTrain() ?: new Train();
             $train->setArrangement($dto->train->arrangement);
 
             if (!empty($dto->train->restraints)) {
                 $resData = $dto->train->restraints[0];
-                $restraint = $this->entityManager->getRepository(Location::class)->findOneBy(['rcdbId' => $resData->id]
-                );
+                $restraint = $this->entityManager->getRepository(Location::class)->findOneBy(['rcdbId' => $resData->id]);
                 if (!$restraint) {
                     $restraint = new Location();
                     $restraint->setName($resData->ident);
+                    $restraint->setIdent($resData->ident);
                     $restraint->setRcdbId($resData->id);
                     $restraint->setRcdbUrl($resData->url);
                     $restraint->setType(LocationType::NOT_DETERMINED);
@@ -246,11 +291,13 @@ class ImportService
             if (!empty($dto->train->builtBy)) {
                 $bbData = $dto->train->builtBy[0];
                 $builder = $this->entityManager->getRepository(Manufacturer::class)->findOneBy(
-                    ['name' => $bbData->ident]
+                    ['ident' => $bbData->ident]
                 );
+
                 if (!$builder) {
                     $builder = new Manufacturer();
                     $builder->setName($bbData->ident);
+                    $builder->setIdent($bbData->ident);
                     if ($bbData->id) {
                         $builder->setRcdbId($bbData->id);
                     }
@@ -264,25 +311,60 @@ class ImportService
             $coaster->setTrain($train);
         }
 
+        // Clear existing details to avoid duplicates on re-import
+        foreach ($coaster->getDetails() as $detail) {
+            $coaster->removeDetail($detail);
+        }
+
         foreach ($dto->details as $content) {
-            $detail = new Detail();
-            $detail->setContent($content);
-            $detail->setType(DetailType::DETAIL);
-            $coaster->addDetail($detail);
+            $detail = $this->entityManager->getRepository(Detail::class)->findOneBy(['ident' => $content]);
+            if (!$detail) {
+                $detail = new Detail();
+                $detail->setContent($content);
+                $detail->setIdent($content);
+                $detail->setName($content);
+                $detail->setType(DetailType::DETAIL);
+                if (!$dryRun) {
+                    $this->entityManager->persist($detail);
+                }
+            }
+            if (!$coaster->getDetails()->contains($detail)) {
+                $coaster->addDetail($detail);
+            }
         }
 
         foreach ($dto->facts as $content) {
-            $detail = new Detail();
-            $detail->setContent($content);
-            $detail->setType(DetailType::FACT);
-            $coaster->addDetail($detail);
+            $detail = $this->entityManager->getRepository(Detail::class)->findOneBy(['ident' => $content]);
+            if (!$detail) {
+                $detail = new Detail();
+                $detail->setContent($content);
+                $detail->setIdent($content);
+                $detail->setName($content);
+                $detail->setType(DetailType::FACT);
+                if (!$dryRun) {
+                    $this->entityManager->persist($detail);
+                }
+            }
+            if (!$coaster->getDetails()->contains($detail)) {
+                $coaster->addDetail($detail);
+            }
         }
 
         foreach ($dto->history as $content) {
-            $detail = new Detail();
-            $detail->setContent($content);
-            $detail->setType(DetailType::HISTORY);
-            $coaster->addDetail($detail);
+            $detail = $this->entityManager->getRepository(Detail::class)->findOneBy(['ident' => $content]);
+            if (!$detail) {
+                $detail = new Detail();
+                $detail->setContent($content);
+                $detail->setIdent($content);
+                $detail->setName($content);
+                $detail->setType(DetailType::HISTORY);
+                if (!$dryRun) {
+                    $this->entityManager->persist($detail);
+                }
+            }
+            if (!$coaster->getDetails()->contains($detail)) {
+                $coaster->addDetail($detail);
+            }
         }
 
         if (!$dryRun) {
