@@ -1,4 +1,5 @@
 
+
 {% macro coaster_card(coaster) %}
     <div class="card coaster-card shadow-sm h-100 text-center" data-controller="flip" data-action="click->flip#toggle">
         {% set name = coaster.name ?? '' %}
@@ -8,7 +9,17 @@
 
         <!-- Front side -->
         <div class="card-inner-front" data-flip-target="front">
-            <img src="{{ image }}" class="card-img-top" alt="{{ name }}">
+            <div class="image-container">
+                <img src="{{ image }}" class="card-img-top" alt="{{ name }}">
+                <button class="magnifying-glass-btn"
+                        data-controller="modal"
+                        data-action="click->modal#open"
+                        data-modal-image-value="{{ image }}"
+                        data-modal-title-value="{{ name }}"
+                        onclick="event.stopPropagation();">
+                    {{ ux_icon('lucide:search', {style: 'height: 1.2em; width: 1.2em;'}) }}
+                </button>
+            </div>
             <div class="card-body p-2">
                 <h5 class="card-title mb-1">{{ name }}</h5>
                 <p class="card-text small mb-0">{{ park }}<br><em>{{ country }}</em></p>
@@ -25,7 +36,6 @@
                             <dt class="fw-bold">Länge</dt>
                             <dd class="mb-2">{{ coaster.track.length|round(2) }} m</dd>
                         {% endif %}
-
                         {% if coaster.track.height %}
                             <dt class="fw-bold">Höhe</dt>
                             <dd class="mb-2">{{ coaster.track.height|round }} m</dd>
@@ -57,32 +67,28 @@
 
 <div{{ attributes }}>
     <div data-controller="loading">
-    <div class="row g-3">
-        <div class="col-6">
-            {{ _self.coaster_card(this.left) }}
+        <div class="row g-3">
+            <div class="col-6">
+                {{ _self.coaster_card(this.left) }}
+            </div>
+            <div class="col-6">
+                {{ _self.coaster_card(this.right) }}
+            </div>
         </div>
 
-        <div class="col-6">
-            {{ _self.coaster_card(this.right) }}
+        <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
+            <button data-action="click->loading#stop click->live#action" data-live-action-param="chooseLeft"
+                    class="btn btn-lg btn-choice btn-outline-dark flex-fill">
+                <i>{{ ux_icon('icons8:left-round', {style: 'height: 1.5em;'}) }}</i> Links
+            </button>
+            <button data-action="click->loading#stop click->live#action" data-live-action-param="skip"
+                    class="btn btn-lg btn-choice btn-outline-secondary btn-filled flex-fill">
+                <i>{{ ux_icon('material-symbols:refresh', {style: 'height: 1.5em;'}) }}</i> Skip
+            </button>
+            <button data-action="click->loading#stop click->live#action" data-live-action-param="chooseRight"
+                    class="btn btn-lg btn-choice btn-outline-dark flex-fill">
+                Rechts <i>{{ ux_icon('icons8:right-round', {style: 'height: 1.5em;'}) }}</i>
+            </button>
         </div>
     </div>
-
-    <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
-        <button data-action="click->loading#stop click->live#action" data-live-action-param="chooseLeft"
-                class="btn btn-lg btn-choice btn-outline-dark flex-fill">
-            <i>{{ ux_icon('icons8:left-round', {style: 'height: 1.5em;'}) }}</i> Links
-        </button>
-
-        <button data-action="click->loading#stop click->live#action" data-live-action-param="skip"
-                class="btn btn-lg btn-choice btn-outline-secondary btn-filled flex-fill">
-            <i>{{ ux_icon('material-symbols:refresh', {style: 'height: 1.5em;'}) }}</i> Skip
-        </button>
-
-        <button data-action="click->loading#stop click->live#action" data-live-action-param="chooseRight"
-                class="btn btn-lg btn-choice btn-outline-dark flex-fill">
-            Rechts <i>{{ ux_icon('icons8:right-round', {style: 'height: 1.5em;'}) }}</i>
-        </button>
-    </div>
-    </div>
-
 </div>

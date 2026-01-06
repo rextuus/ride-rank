@@ -57,6 +57,50 @@
         opacity: 1;
         visibility: visible;
         transform: rotateY(0deg);
+
+        .image-container {
+            position: relative;
+            overflow: hidden;
+
+            img {
+                border-bottom: 1px solid $brand-border;
+                object-fit: cover;
+                height: 300px;
+                width: 100%;
+            }
+
+            .magnifying-glass-btn {
+                position: absolute;
+                top: 0.75rem;
+                right: 0.75rem;
+                width: 2.5rem;
+                height: 2.5rem;
+                border-radius: 50%;
+                background-color: rgba(255, 255, 255, 0.9);
+                border: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.2s ease-in-out;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                color: #3a2a1a;
+
+                &:hover {
+                    background-color: #fff;
+                    transform: scale(1.1);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+                }
+
+                &:active {
+                    transform: scale(0.95);
+                }
+
+                svg {
+                    display: flex;
+                }
+            }
+        }
     }
 
     .card-inner-back {
