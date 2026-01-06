@@ -14,6 +14,7 @@
 {% endmacro %}
 
 <div{{ attributes }}>
+    <div data-controller="loading">
     <div class="row g-3">
         <div class="col-6">
             {{ _self.coaster_card(this.left) }}
@@ -25,21 +26,21 @@
     </div>
 
     <div class="d-flex justify-content-between align-items-center mt-4 gap-2">
-        <button data-action="live#action" data-live-action-param="chooseLeft"
+        <button data-action="click->loading#stop click->live#action" data-live-action-param="chooseLeft"
                 class="btn btn-lg btn-choice btn-outline-dark flex-fill">
             <i>{{ ux_icon('icons8:left-round', {style: 'height: 1.5em;'}) }}</i> Links
         </button>
 
-        <button data-action="live#action" data-live-action-param="skip"
+        <button data-action="click->loading#stop click->live#action" data-live-action-param="skip"
                 class="btn btn-lg btn-choice btn-outline-secondary btn-filled flex-fill">
             <i>{{ ux_icon('material-symbols:refresh', {style: 'height: 1.5em;'}) }}</i> Skip
         </button>
 
-        <button data-action="live#action" data-live-action-param="chooseRight"
+        <button data-action="click->loading#stop click->live#action" data-live-action-param="chooseRight"
                 class="btn btn-lg btn-choice btn-outline-dark flex-fill">
             Rechts <i>{{ ux_icon('icons8:right-round', {style: 'height: 1.5em;'}) }}</i>
         </button>
     </div>
-
+    </div>
 
 </div>
