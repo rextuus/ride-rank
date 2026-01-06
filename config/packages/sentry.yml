@@ -5,10 +5,10 @@ sentry:
         environment: '%kernel.environment%'
 
 # This part ensures Sentry is active even in dev mode
-when@dev:
-    sentry:
-        options:
-            # By default, Sentry might skip sending if debug is true. 
-            # We can ensure it sends by keeping its default behavior or forcing it.
-            # Usually, just having the DSN set is enough if the bundle is loaded.
-            sample_rate: 1.0
+#when@dev:
+#    sentry:
+#        options:
+#            # By default, Sentry might skip sending if debug is true.
+#            # We can ensure it sends by keeping its default behavior or forcing it.
+#            # Usually, just having the DSN set is enough if the bundle is loaded.
+#            sample_rate: 1.0

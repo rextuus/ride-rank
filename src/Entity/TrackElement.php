@@ -6,6 +6,8 @@ use App\Common\Entity\Trait\CreateDateTrait;
 use App\Common\Entity\Trait\IdentTrait;
 use App\Common\Entity\Trait\RcdbEntityTrait;
 use App\Repository\TrackElementRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: TrackElementRepository::class)]
@@ -21,23 +23,45 @@ class TrackElement
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'elements')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Track $track = null;
+    /**
+     * @var Collection<int, Track>
+     */
+    #[ORM\ManyToMany(targetEntity: Track::class, mappedBy: 'elements')]
+    private Collection $tracks;
+
+    public function __construct()
+    {
+        $this->tracks = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getTrack(): ?Track
+    /**
+     * @return Collection<int, Track>
+     */
+    public function getTracks(): Collection
     {
-        return $this->track;
+        return $this->tracks;
     }
 
-    public function setTrack(?Track $track): static
+    public function addTrack(Track $track): static
     {
-        $this->track = $track;
+        if (!$this->tracks->contains($track)) {
+            $this->tracks->add($track);
+            $track->addElement($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTrack(Track $track): static
+    {
+        if ($this->tracks->removeElement($track)) {
+            $track->removeElement($this);
+        }
 
         return $this;
     }

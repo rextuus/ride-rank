@@ -46,7 +46,7 @@ class Track
     /**
      * @var Collection<int, TrackElement>
      */
-    #[ORM\OneToMany(targetEntity: TrackElement::class, mappedBy: 'track', orphanRemoval: true, cascade: ['persist', 'remove'])]
+    #[ORM\ManyToMany(targetEntity: TrackElement::class, inversedBy: 'tracks')]
     private Collection $elements;
 
     public function __construct()
@@ -177,7 +177,6 @@ class Track
     {
         if (!$this->elements->contains($element)) {
             $this->elements->add($element);
-            $element->setTrack($this);
         }
 
         return $this;
@@ -185,12 +184,7 @@ class Track
 
     public function removeElement(TrackElement $element): static
     {
-        if ($this->elements->removeElement($element)) {
-            // set the owning side to null (unless already changed)
-            if ($element->getTrack() === $this) {
-                $element->setTrack(null);
-            }
-        }
+        $this->elements->removeElement($element);
 
         return $this;
     }

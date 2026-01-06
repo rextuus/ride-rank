@@ -6,6 +6,8 @@ use App\Common\Entity\Trait\CreateDateTrait;
 use App\Common\Entity\Trait\IdentTrait;
 use App\Enum\DetailType;
 use App\Repository\DetailRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: DetailRepository::class)]
@@ -26,9 +28,16 @@ class Detail
     #[ORM\Column(length: 255, nullable: true, enumType: DetailType::class)]
     private ?DetailType $type = null;
 
-    #[ORM\ManyToOne(inversedBy: 'details')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Coaster $coaster = null;
+    /**
+     * @var Collection<int, Coaster>
+     */
+    #[ORM\ManyToMany(targetEntity: Coaster::class, mappedBy: 'details')]
+    private Collection $coasters;
+
+    public function __construct()
+    {
+        $this->coasters = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -59,14 +68,29 @@ class Detail
         return $this;
     }
 
-    public function getCoaster(): ?Coaster
+    /**
+     * @return Collection<int, Coaster>
+     */
+    public function getCoasters(): Collection
     {
-        return $this->coaster;
+        return $this->coasters;
     }
 
-    public function setCoaster(?Coaster $coaster): static
+    public function addCoaster(Coaster $coaster): static
     {
-        $this->coaster = $coaster;
+        if (!$this->coasters->contains($coaster)) {
+            $this->coasters->add($coaster);
+            $coaster->addDetail($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCoaster(Coaster $coaster): static
+    {
+        if ($this->coasters->removeElement($coaster)) {
+            $coaster->removeDetail($this);
+        }
 
         return $this;
     }

@@ -21,6 +21,7 @@ use App\Entity\Track;
 use App\Entity\TrackElement;
 use App\Entity\Train;
 use App\Enum\DetailType;
+use App\Enum\OperatingStatus;
 use Doctrine\ORM\EntityManagerInterface;
 
 readonly class ImportService
@@ -127,7 +128,21 @@ readonly class ImportService
 
         $coaster->setName($dto->name);
         $coaster->setIdent($dto->name); // Assuming ident is name for now
-        $coaster->setStatus($dto->status);
+
+        $status = null;
+        try {
+            $status = OperatingStatus::tryFrom($dto->status);
+        } catch (\Exception $e) {
+            if (str_contains('Removed', $dto->status)){
+                $status = OperatingStatus::REMOVED_OPERATED_FROM;
+            }
+        }
+
+        if ($status === null) {
+            throw new \Exception('Unknown operating status: ' . $dto->status);
+        }
+
+        $coaster->setStatus($status);
         $coaster->setImages($dto->images->rcdbJson);
         $coaster->setRcdbImageUrl($dto->images->defaultUrl);
 
@@ -147,6 +162,8 @@ readonly class ImportService
             $manufacturer->setIdent($manufacturerName);
             if (!$dryRun) {
                 $this->entityManager->persist($manufacturer);
+                // Flush to avoid unique constraint violation if used again in same transaction
+                $this->entityManager->flush();
             }
         }
         $coaster->setManufacturer($manufacturer);
@@ -176,6 +193,7 @@ readonly class ImportService
 
                 if (!$dryRun) {
                     $this->entityManager->persist($location);
+                    $this->entityManager->flush();
                 }
             }
             if (!$coaster->getLocations()->contains($location)) {
@@ -207,6 +225,7 @@ readonly class ImportService
                 $category->setRcdbUrl($catData->url);
                 if (!$dryRun) {
                     $this->entityManager->persist($category);
+                    $this->entityManager->flush();
                 }
             }
             if (!$coaster->getCategories()->contains($category)) {
@@ -257,6 +276,7 @@ readonly class ImportService
                     $element->setRcdbUrl($elData->url);
                     if (!$dryRun) {
                         $this->entityManager->persist($element);
+                        $this->entityManager->flush();
                     }
                 }
 
@@ -275,6 +295,10 @@ readonly class ImportService
                 $resData = $dto->train->restraints[0];
                 $restraint = $this->entityManager->getRepository(Location::class)->findOneBy(['rcdbId' => $resData->id]);
                 if (!$restraint) {
+                    $restraint = $this->entityManager->getRepository(Location::class)->findOneBy(['ident' => $resData->ident]);
+                }
+
+                if (!$restraint) {
                     $restraint = new Location();
                     $restraint->setName($resData->ident);
                     $restraint->setIdent($resData->ident);
@@ -283,6 +307,7 @@ readonly class ImportService
                     $restraint->setType(LocationType::NOT_DETERMINED);
                     if (!$dryRun) {
                         $this->entityManager->persist($restraint);
+                        $this->entityManager->flush();
                     }
                 }
                 $train->setRestraint($restraint);
@@ -290,9 +315,18 @@ readonly class ImportService
 
             if (!empty($dto->train->builtBy)) {
                 $bbData = $dto->train->builtBy[0];
-                $builder = $this->entityManager->getRepository(Manufacturer::class)->findOneBy(
-                    ['ident' => $bbData->ident]
-                );
+                $builder = null;
+                if ($bbData->id) {
+                    $builder = $this->entityManager->getRepository(Manufacturer::class)->findOneBy(
+                        ['rcdbId' => $bbData->id]
+                    );
+                }
+
+                if (!$builder) {
+                    $builder = $this->entityManager->getRepository(Manufacturer::class)->findOneBy(
+                        ['ident' => $bbData->ident]
+                    );
+                }
 
                 if (!$builder) {
                     $builder = new Manufacturer();
@@ -304,6 +338,7 @@ readonly class ImportService
                     $builder->setRcdbUrl($bbData->url);
                     if (!$dryRun) {
                         $this->entityManager->persist($builder);
+                        $this->entityManager->flush();
                     }
                 }
                 $train->setBuiltBy($builder);
@@ -326,6 +361,7 @@ readonly class ImportService
                 $detail->setType(DetailType::DETAIL);
                 if (!$dryRun) {
                     $this->entityManager->persist($detail);
+                    $this->entityManager->flush();
                 }
             }
             if (!$coaster->getDetails()->contains($detail)) {
@@ -343,6 +379,7 @@ readonly class ImportService
                 $detail->setType(DetailType::FACT);
                 if (!$dryRun) {
                     $this->entityManager->persist($detail);
+                    $this->entityManager->flush();
                 }
             }
             if (!$coaster->getDetails()->contains($detail)) {
@@ -360,6 +397,7 @@ readonly class ImportService
                 $detail->setType(DetailType::HISTORY);
                 if (!$dryRun) {
                     $this->entityManager->persist($detail);
+                    $this->entityManager->flush();
                 }
             }
             if (!$coaster->getDetails()->contains($detail)) {

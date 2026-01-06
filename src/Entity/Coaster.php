@@ -2,9 +2,11 @@
 
 namespace App\Entity;
 
+use App\Common\Entity\Enum\LocationType;
 use App\Common\Entity\Trait\CreateDateTrait;
-use App\Common\Entity\Trait\IdentTrait;
+use App\Common\Entity\Trait\NonUniqueIdentTrait;
 use App\Common\Entity\Trait\RcdbEntityTrait;
+use App\Enum\OperatingStatus;
 use App\Repository\CoasterRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -15,7 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\HasLifecycleCallbacks]
 class Coaster
 {
-    use IdentTrait;
+    use NonUniqueIdentTrait;
     use CreateDateTrait;
     use RcdbEntityTrait;
 
@@ -24,8 +26,8 @@ class Coaster
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $status = null;
+    #[ORM\Column(enumType: OperatingStatus::class, options: ['default' => OperatingStatus::OPERATING_SINCE])]
+    private ?OperatingStatus $status = null;
 
     /**
      * @var Collection<int, Location>
@@ -38,6 +40,9 @@ class Coaster
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $rcdbImageUrl = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $cdnImageUrl = null;
 
     /**
      * @var Collection<int, Category>
@@ -54,10 +59,16 @@ class Coaster
     #[ORM\ManyToOne(inversedBy: 'coasters')]
     private ?Manufacturer $manufacturer = null;
 
+    #[ORM\Column(options: ['default' => 1200.0])]
+    private float $rating = 1200.0;
+
+    #[ORM\Column(options: ['default' => 0])]
+    private int $comparisonsCount = 0;
+
     /**
      * @var Collection<int, Detail>
      */
-    #[ORM\OneToMany(targetEntity: Detail::class, mappedBy: 'coaster', orphanRemoval: true, cascade: ['persist'])]
+    #[ORM\ManyToMany(targetEntity: Detail::class, inversedBy: 'coasters')]
     private Collection $details;
 
     public function __construct()
@@ -72,12 +83,12 @@ class Coaster
         return $this->id;
     }
 
-    public function getStatus(): ?string
+    public function getStatus(): ?OperatingStatus
     {
         return $this->status;
     }
 
-    public function setStatus(?string $status): static
+    public function setStatus(?OperatingStatus $status): static
     {
         $this->status = $status;
 
@@ -128,6 +139,18 @@ class Coaster
     public function setRcdbImageUrl(?string $rcdbImageUrl): static
     {
         $this->rcdbImageUrl = $rcdbImageUrl;
+
+        return $this;
+    }
+
+    public function getCdnImageUrl(): ?string
+    {
+        return $this->cdnImageUrl;
+    }
+
+    public function setCdnImageUrl(?string $cdnImageUrl): static
+    {
+        $this->cdnImageUrl = $cdnImageUrl;
 
         return $this;
     }
@@ -204,7 +227,6 @@ class Coaster
     {
         if (!$this->details->contains($detail)) {
             $this->details->add($detail);
-            $detail->setCoaster($this);
         }
 
         return $this;
@@ -212,13 +234,48 @@ class Coaster
 
     public function removeDetail(Detail $detail): static
     {
-        if ($this->details->removeElement($detail)) {
-            // set the owning side to null (unless already changed)
-            if ($detail->getCoaster() === $this) {
-                $detail->setCoaster(null);
-            }
-        }
+        $this->details->removeElement($detail);
 
         return $this;
+    }
+
+    public function getRating(): float
+    {
+        return $this->rating;
+    }
+
+    public function setRating(float $rating): static
+    {
+        $this->rating = $rating;
+
+        return $this;
+    }
+
+    public function getComparisonsCount(): int
+    {
+        return $this->comparisonsCount;
+    }
+
+    public function setComparisonsCount(int $comparisonsCount): static
+    {
+        $this->comparisonsCount = $comparisonsCount;
+
+        return $this;
+    }
+
+    public function getFirstLocationOfType(LocationType $locationType): ?Location
+    {
+        $locations = array_filter(
+            $this->getLocations()->toArray(),
+            function (Location $location) use ($locationType) {
+                return $location->getType() === $locationType;
+            }
+        );
+
+        if (count($locations) === 0) {
+            return null;
+        }
+
+        return $locations[array_key_first($locations)];
     }
 }

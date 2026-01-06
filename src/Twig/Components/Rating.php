@@ -12,10 +12,10 @@ final class Rating
     use DefaultActionTrait;
 
     #[LiveProp]
-    public float $value = 0; // Durchschnitt, eigene Bewertung etc.
+    public float $value = 0;
 
     #[LiveProp]
-    public int $max = 5; // Anzahl Sterne
+    public int $max = 5;
 
     #[LiveProp]
     public bool $interactive = false;

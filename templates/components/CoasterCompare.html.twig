@@ -1,23 +1,26 @@
+{% macro coaster_card(coaster) %}
+    <div class="card coaster-card shadow-sm h-100 text-center">
+        {% set name = coaster.name ?? '' %}
+        {% set image = coaster.image ?? '' %}
+        {% set park = coaster.park ?? '' %}
+        {% set country = coaster.country ?? '' %}
+
+        <img src="{{ image }}" class="card-img-top" alt="{{ name }}">
+        <div class="card-body p-2">
+            <h5 class="card-title mb-1">{{ name }}</h5>
+            <p class="card-text small mb-0">{{ park }}<br><em>{{ country }}</em></p>
+        </div>
+    </div>
+{% endmacro %}
+
 <div{{ attributes }}>
     <div class="row g-3">
         <div class="col-6">
-            <div class="card coaster-card shadow-sm h-100 text-center">
-                <img src="{{ this.left.image }}" class="card-img-top" alt="{{ this.left.name }}">
-                <div class="card-body p-2">
-                    <h5 class="card-title mb-1">{{ this.left.name }}</h5>
-                    <p class="card-text small mb-0">{{ this.left.park }}<br><em>{{ this.left.country }}</em></p>
-                </div>
-            </div>
+            {{ _self.coaster_card(this.left) }}
         </div>
 
         <div class="col-6">
-            <div class="card coaster-card shadow-sm h-100 text-center">
-                <img src="{{ this.right.image }}" class="card-img-top" alt="{{ this.right.name }}">
-                <div class="card-body p-2">
-                    <h5 class="card-title mb-1">{{ this.right.name }}</h5>
-                    <p class="card-text small mb-0">{{ this.right.park }}<br><em>{{ this.right.country }}</em></p>
-                </div>
-            </div>
+            {{ _self.coaster_card(this.right) }}
         </div>
     </div>
 
