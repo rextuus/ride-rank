@@ -7,10 +7,69 @@
     border-radius: 14px;
     overflow: hidden;
     transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    cursor: pointer;
+    perspective: 1000px;
+    position: relative;
+    height: 100%;
 
     &:hover {
         transform: translateY(-3px);
         box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    }
+
+    &.flipped {
+        .card-inner-front {
+            opacity: 0;
+            visibility: hidden;
+            transform: rotateY(180deg);
+        }
+
+        .card-inner-back {
+            opacity: 1;
+            visibility: visible;
+            transform: rotateY(0deg);
+        }
+    }
+
+    .card-inner-front,
+    .card-inner-back {
+        transition: opacity 0.6s, visibility 0.6s, transform 0.6s;
+        backface-visibility: hidden;
+    }
+
+
+    .card-inner-back {
+        opacity: 0;
+        visibility: hidden;
+        transform: rotateY(180deg);
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('https://res.cloudinary.com/duzqnf8fu/image/upload/v1767737818/background_l5liq5.png');
+        background-size: cover;
+        background-position: center;
+        border-radius: 14px;
+    }
+
+    .card-inner-front {
+        opacity: 1;
+        visibility: visible;
+        transform: rotateY(0deg);
+    }
+
+    .card-inner-back {
+        opacity: 0;
+        visibility: hidden;
+        transform: rotateY(180deg);
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: $brand-light;
+        border-radius: 14px;
     }
 
     img {
@@ -39,6 +98,8 @@
         }
     }
 }
+
+// ... existing code ...
 
 // Choice Buttons
 .btn-choice {

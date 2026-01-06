@@ -1,14 +1,56 @@
+
 {% macro coaster_card(coaster) %}
-    <div class="card coaster-card shadow-sm h-100 text-center">
+    <div class="card coaster-card shadow-sm h-100 text-center" data-controller="flip" data-action="click->flip#toggle">
         {% set name = coaster.name ?? '' %}
         {% set image = coaster.image ?? '' %}
         {% set park = coaster.park ?? '' %}
         {% set country = coaster.country ?? '' %}
 
-        <img src="{{ image }}" class="card-img-top" alt="{{ name }}">
-        <div class="card-body p-2">
-            <h5 class="card-title mb-1">{{ name }}</h5>
-            <p class="card-text small mb-0">{{ park }}<br><em>{{ country }}</em></p>
+        <!-- Front side -->
+        <div class="card-inner-front" data-flip-target="front">
+            <img src="{{ image }}" class="card-img-top" alt="{{ name }}">
+            <div class="card-body p-2">
+                <h5 class="card-title mb-1">{{ name }}</h5>
+                <p class="card-text small mb-0">{{ park }}<br><em>{{ country }}</em></p>
+            </div>
+        </div>
+
+        <!-- Back side -->
+        <div class="card-inner-back" data-flip-target="back">
+            <div class="card-body p-2 d-flex flex-column justify-content-center h-100">
+                <h5 class="card-title mb-2">{{ name }}</h5>
+                {% if coaster.track %}
+                    <dl class="small text-start mb-0">
+                        {% if coaster.track.length %}
+                            <dt class="fw-bold">Länge</dt>
+                            <dd class="mb-2">{{ coaster.track.length|round(2) }} m</dd>
+                        {% endif %}
+
+                        {% if coaster.track.height %}
+                            <dt class="fw-bold">Höhe</dt>
+                            <dd class="mb-2">{{ coaster.track.height|round }} m</dd>
+                        {% endif %}
+                        {% if coaster.track.speed %}
+                            <dt class="fw-bold">Geschwindigkeit</dt>
+                            <dd class="mb-2">{{ coaster.track.speed|round }} km/h</dd>
+                        {% endif %}
+                        {% if coaster.track.inversions %}
+                            <dt class="fw-bold">Inversionen</dt>
+                            <dd class="mb-2">{{ coaster.track.inversions }}</dd>
+                        {% endif %}
+                        {% if coaster.track.duration %}
+                            <dt class="fw-bold">Dauer</dt>
+                            <dd class="mb-2">{{ coaster.track.duration }} Sekunden</dd>
+                        {% endif %}
+                        {% if coaster.track.drop %}
+                            <dt class="fw-bold">Drop</dt>
+                            <dd class="mb-2">{{ coaster.track.drop|round }}°</dd>
+                        {% endif %}
+                    </dl>
+                {% else %}
+                    <p class="text-muted small">Keine Detailinformationen verfügbar</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 {% endmacro %}

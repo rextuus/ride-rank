@@ -154,6 +154,8 @@ class CoasterCompare
         $this->right = $this->normalizeCoaster($right);
     }
 
+// ... existing code ...
+
     private function normalizeCoaster(Coaster $coaster): array
     {
         $park = '';
@@ -173,12 +175,29 @@ class CoasterCompare
             $image = $coaster->getRcdbImageUrl();
         }
 
+        $track = null;
+        if ($coaster->getTrack()) {
+            $trackEntity = $coaster->getTrack();
+            $track = [
+                'length' => $trackEntity->getLength(),
+                'height' => $trackEntity->getHeight(),
+                'speed' => $trackEntity->getSpeed(),
+                'inversions' => $trackEntity->getInversions(),
+                'duration' => $trackEntity->getDuration(),
+                'drop' => $trackEntity->getDrop(),
+                'verticalAngle' => $trackEntity->getVerticalAngle(),
+            ];
+        }
+
         return [
             'id' => $coaster->getId(),
             'name' => $coaster->getName(),
             'image' => $image,
             'park' => $park,
             'country' => $country,
+            'track' => $track,
         ];
     }
+
+// ... existing code ...
 }
