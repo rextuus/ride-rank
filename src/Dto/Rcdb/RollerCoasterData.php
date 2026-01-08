@@ -18,6 +18,8 @@ class RollerCoasterData
         public readonly string $name,
         public readonly array $location,
         public readonly string $status,
+        public readonly array $statusDate,
+        public readonly ?int $openingYear,
         public readonly array $categories,
         public readonly ?string $manufacturer,
         public readonly ?TrackData $track,

@@ -1,7 +1,10 @@
 body {
-    background-color: #fff;
     color: #2d2d2d;
     font-family: system-ui, sans-serif;
+    background-color: #F4F1EA; /* Fallback color */
+    background-image: url('https://res.cloudinary.com/duzqnf8fu/image/upload/v1767803942/page_background_csmkq0.png');
+    background-repeat: repeat; /* Ensures it covers long scrolling pages */
+    background-blend-mode: multiply; /* Helps blend with the background color */
 }
 
 html, body {
@@ -16,11 +19,12 @@ main {
 
 // Footer
 footer {
-    background-color: $brand-dark;
-    color: #fff;
+    background-color: $footer-background;
+    backdrop-filter: blur(10px);
+    color: #000000;
 
     .footer-nav a {
-        color: #fff;
+        color: #000000;
         text-decoration: none;
         font-size: 0.8rem;
         display: flex;
@@ -39,8 +43,9 @@ footer {
     left: 0;
     width: 100%;
 
-    background-color: $brand-dark;
-    color: #fff;
+    background-color: $footer-background;
+    backdrop-filter: blur(10px);
+    color: #000000;
     padding: 0.4rem 0;
     border-top: 1px solid rgba(255,255,255,0.1);
 
@@ -50,7 +55,7 @@ footer {
     }
 
     .nav-link {
-        color: #e8e1d8;
+        color: #2b2b2b;
         font-size: 0.75rem;
         text-decoration: none;
         display: flex;
@@ -59,7 +64,7 @@ footer {
         gap: 2px;
 
         &:hover {
-            color: #fff;
+            color: #000000;
         }
 
         &.active {
@@ -71,7 +76,7 @@ footer {
             width: 24px;
             height: 24px;
             margin-bottom: 2px;
-            fill: currentColor;
+            fill: #000000;
         }
     }
 }

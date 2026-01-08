@@ -4,16 +4,22 @@ namespace App\Twig\Components;
 
 use App\Common\Entity\Enum\LocationType;
 use App\Entity\Coaster;
+use App\Entity\RiddenCoaster;
+use App\Entity\User;
 use App\Repository\CoasterRepository;
+use App\Repository\RiddenCoasterRepository;
 use App\Service\Rating\EloRatingService;
 use App\Service\Rating\MatchupSelectionService;
 use App\Service\Rating\PairwiseComparisonService;
 use DateTime;
+use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveProp;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
+use Symfony\UX\LiveComponent\Attribute\LiveArg;
 
 #[AsLiveComponent]
 class CoasterCompare
@@ -31,10 +37,12 @@ class CoasterCompare
 
     public function __construct(
         private readonly CoasterRepository $coasterRepository,
+        private readonly RiddenCoasterRepository $riddenCoasterRepository,
         private readonly MatchupSelectionService $matchupSelectionService,
         private readonly EloRatingService $eloRatingService,
         private readonly PairwiseComparisonService $pairwiseComparisonService,
         private readonly Security $security,
+        private readonly EntityManagerInterface $entityManager,
     ) {
         $this->lastInteraction = new DateTime();
     }
@@ -63,6 +71,44 @@ class CoasterCompare
     public function skip(): void
     {
         $this->pickNewCoasters();
+    }
+
+    #[LiveAction]
+    public function toggleSeen(#[LiveArg] int $id): void
+    {
+        $user = $this->security->getUser();
+        if (!$user instanceof User) {
+            return;
+        }
+
+        $coaster = $this->coasterRepository->find($id);
+        if (!$coaster) {
+            return;
+        }
+
+        $riddenCoaster = $this->riddenCoasterRepository->findOneBy([
+            'user' => $user,
+            'coaster' => $coaster,
+        ]);
+
+        if ($riddenCoaster) {
+            $this->entityManager->remove($riddenCoaster);
+        } else {
+            $riddenCoaster = new RiddenCoaster();
+            $riddenCoaster->setUser($user);
+            $riddenCoaster->setCoaster($coaster);
+            $riddenCoaster->setRiddenAt(new DateTimeImmutable());
+            $this->entityManager->persist($riddenCoaster);
+        }
+
+        $this->entityManager->flush();
+
+        // Refresh normalized data
+        if (isset($this->left['id']) && $this->left['id'] === $id) {
+            $this->left = $this->normalizeCoaster($coaster);
+        } elseif (isset($this->right['id']) && $this->right['id'] === $id) {
+            $this->right = $this->normalizeCoaster($coaster);
+        }
     }
 
     private function persistChoice(int $winnerId): void
@@ -146,15 +192,13 @@ class CoasterCompare
         $left = $this->coasterRepository->find(203);
         $right = $this->coasterRepository->find(201);
 
-        $coasters = $this->matchupSelectionService->getNextMatchup(null);
-        $left = $coasters[0];
-        $right = $coasters[1];
+//        $coasters = $this->matchupSelectionService->getNextMatchup(null);
+//        $left = $coasters[0];
+//        $right = $coasters[1];
 
         $this->left = $this->normalizeCoaster($left);
         $this->right = $this->normalizeCoaster($right);
     }
-
-// ... existing code ...
 
     private function normalizeCoaster(Coaster $coaster): array
     {
@@ -189,6 +233,15 @@ class CoasterCompare
             ];
         }
 
+        $isSeen = false;
+        $user = $this->security->getUser();
+        if ($user instanceof User) {
+            $isSeen = $this->riddenCoasterRepository->findOneBy([
+                'user' => $user,
+                'coaster' => $coaster,
+            ]) !== null;
+        }
+
         return [
             'id' => $coaster->getId(),
             'name' => $coaster->getName(),
@@ -196,8 +249,7 @@ class CoasterCompare
             'park' => $park,
             'country' => $country,
             'track' => $track,
+            'isSeen' => $isSeen,
         ];
     }
-
-// ... existing code ...
 }

@@ -24,6 +24,17 @@
                 <h5 class="card-title mb-1">{{ name }}</h5>
                 <p class="card-text small mb-0">{{ park }}<br><em>{{ country }}</em></p>
             </div>
+            <div class="card-footer p-1 bg-transparent border-0">
+                <button class="btn ridden-btn {{ coaster.isSeen ? 'btn-success' : 'btn-danger' }} w-100"
+                        data-action="click->live#action"
+                        data-live-action-param="toggleSeen"
+                        data-live-id-param="{{ coaster.id }}"
+                        {% if not app.user %}disabled title="Login zum Markieren"{% endif %}
+                        onclick="event.stopPropagation();">
+                    {{ ux_icon(coaster.isSeen ? 'lucide:check-circle' : 'lucide:circle', {style: 'height: 1.2em; width: 1.2em;'}) }}
+                    {{ coaster.isSeen ? 'Gefahren' : 'Nicht gefahren' }}
+                </button>
+            </div>
         </div>
 
         <!-- Back side -->
@@ -60,6 +71,17 @@
                 {% else %}
                     <p class="text-muted small">Keine Detailinformationen verfügbar</p>
                 {% endif %}
+            </div>
+            <div class="card-footer p-1 bg-transparent border-0">
+                <button class="btn btn-sm {{ coaster.isSeen ? 'btn-success' : 'btn-outline-secondary' }} w-100"
+                        data-action="click->live#action"
+                        data-live-action-param="toggleSeen"
+                        data-live-id-param="{{ coaster.id }}"
+                        {% if not app.user %}disabled title="Login zum Markieren"{% endif %}
+                        onclick="event.stopPropagation();">
+                    {{ ux_icon(coaster.isSeen ? 'lucide:check-circle' : 'lucide:circle', {style: 'height: 1.2em; width: 1.2em;'}) }}
+                    {{ coaster.isSeen ? 'Gesehen' : 'Markieren' }}
+                </button>
             </div>
         </div>
     </div>

@@ -14,6 +14,7 @@ use App\Dto\Rcdb\TrackElementData;
 use App\Dto\Rcdb\TrainData;
 use App\Entity\Category;
 use App\Entity\Coaster;
+use App\Entity\CoasterMetadata;
 use App\Entity\Detail;
 use App\Entity\Location;
 use App\Entity\Manufacturer;
@@ -23,6 +24,7 @@ use App\Entity\Train;
 use App\Enum\DetailType;
 use App\Enum\OperatingStatus;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 
 readonly class ImportService
 {
@@ -46,6 +48,9 @@ readonly class ImportService
         });
     }
 
+    /**
+     * @throws IsNeitherCoasterNorParcEntryException
+     */
     private function mapArrayToDto(int $rcdbId, array $data): RollerCoasterData
     {
         $locations = array_map(
@@ -57,6 +62,13 @@ readonly class ImportService
             fn(array $cat) => new CategoryData($cat['ident'], $cat['id'], $cat['url']),
             $data['categories'] ?? []
         );
+
+        // Extract opening year (first date from statusDate array)
+        $openingYear = null;
+        if (!empty($data['statusDate']) && is_array($data['statusDate'])) {
+            $firstYear = reset($data['statusDate']);
+            $openingYear = is_numeric($firstYear) ? (int) $firstYear : null;
+        }
 
         $track = null;
         if (isset($data['tracks'])) {
@@ -102,11 +114,17 @@ readonly class ImportService
             $data['images']['default'] ?? null
         );
 
+        if (!isset($data['status'])) {
+            throw new IsNeitherCoasterNorParcEntryException('Missing status');
+        }
+
         return new RollerCoasterData(
             $rcdbId,
             $data['name'],
             $locations,
             $data['status'],
+            $data['statusDate'],
+            $openingYear,
             $categories,
             $data['manufacturer'] ?? null,
             $track,
@@ -127,24 +145,25 @@ readonly class ImportService
         }
 
         $coaster->setName($dto->name);
-        $coaster->setIdent($dto->name); // Assuming ident is name for now
+        $coaster->setIdent($dto->name);
+        $coaster->setOpeningYear($dto->openingYear);
 
-        $status = null;
-        try {
-            $status = OperatingStatus::tryFrom($dto->status);
-        } catch (\Exception $e) {
-            if (str_contains('Removed', $dto->status)){
-                $status = OperatingStatus::REMOVED_OPERATED_FROM;
-            }
-        }
-
+        $status = OperatingStatus::tryFrom($dto->status);
         if ($status === null) {
-            throw new \Exception('Unknown operating status: ' . $dto->status);
+            throw new Exception('Unknown operating status: ' . $dto->status);
         }
 
         $coaster->setStatus($status);
-        $coaster->setImages($dto->images->rcdbJson);
         $coaster->setRcdbImageUrl($dto->images->defaultUrl);
+
+        // Create or update metadata
+        $metadata = $coaster->getMetadata();
+        if (!$metadata) {
+            $metadata = new CoasterMetadata($coaster);
+            $coaster->setMetadata($metadata);
+        }
+        $metadata->setImages($dto->images->rcdbJson);
+        $metadata->setStatusDates($dto->statusDate ?: null);
 
         $manufacturerName = $dto->manufacturer ?: 'Unknown Manufacturer';
         $manufacturer = $this->entityManager->getRepository(Manufacturer::class)->findOneBy(

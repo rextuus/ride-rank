@@ -35,9 +35,6 @@ class Coaster
     #[ORM\ManyToMany(targetEntity: Location::class, inversedBy: 'coasters')]
     private Collection $locations;
 
-    #[ORM\Column(type: Types::JSON, nullable: true)]
-    private ?array $images = null;
-
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $rcdbImageUrl = null;
 
@@ -49,6 +46,12 @@ class Coaster
      */
     #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'coasters')]
     private Collection $categories;
+
+    #[ORM\Column(type: Types::SMALLINT, nullable: true, options: ['default' => null])]
+    private ?int $openingYear = null;
+
+    #[ORM\OneToOne(targetEntity: CoasterMetadata::class, mappedBy: 'coaster', cascade: ['persist', 'remove'], fetch: 'LAZY')]
+    private ?CoasterMetadata $metadata = null;
 
     #[ORM\OneToOne(inversedBy: 'coaster', cascade: ['persist', 'remove'])]
     private ?Train $train = null;
@@ -76,6 +79,7 @@ class Coaster
         $this->locations = new ArrayCollection();
         $this->categories = new ArrayCollection();
         $this->details = new ArrayCollection();
+        $this->metadata = new CoasterMetadata($this);
     }
 
     public function getId(): ?int
@@ -121,13 +125,15 @@ class Coaster
 
     public function getImages(): ?array
     {
-        return $this->images;
+        return $this->metadata?->getImages();
     }
 
     public function setImages(?array $images): static
     {
-        $this->images = $images;
-
+        if (!$this->metadata) {
+            $this->metadata = new CoasterMetadata($this);
+        }
+        $this->metadata->setImages($images);
         return $this;
     }
 
@@ -277,5 +283,44 @@ class Coaster
         }
 
         return $locations[array_key_first($locations)];
+    }
+
+    public function getStatusDates(): ?array
+    {
+        return $this->metadata?->getStatusDates();
+    }
+
+    public function setStatusDates(?array $statusDates): static
+    {
+        if (!$this->metadata) {
+            $this->metadata = new CoasterMetadata($this);
+        }
+        $this->metadata->setStatusDates($statusDates);
+
+        return $this;
+    }
+
+    public function getOpeningYear(): ?int
+    {
+        return $this->openingYear;
+    }
+
+    public function setOpeningYear(?int $openingYear): static
+    {
+        $this->openingYear = $openingYear;
+
+        return $this;
+    }
+
+    public function getMetadata(): ?CoasterMetadata
+    {
+        return $this->metadata;
+    }
+
+    public function setMetadata(?CoasterMetadata $metadata): static
+    {
+        $this->metadata = $metadata;
+
+        return $this;
     }
 }

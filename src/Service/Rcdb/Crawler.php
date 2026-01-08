@@ -77,6 +77,13 @@ class Crawler
         }
     }
 
+    private function isParkPage(DomCrawler $domCrawler): bool
+    {
+        // Look for the "Parks in der Nähe" or "Nearby Parks" link which indicates this is a park page
+        $parkLink = $domCrawler->filter('a[href*="/r.htm?ot=3"]');
+        return $parkLink->count() > 0;
+    }
+
     /**
      * @return array<string, mixed>
      * @throws RuntimeException
@@ -109,12 +116,19 @@ class Crawler
 
     /**
      * @return array<string, mixed>
-     * @throws RuntimeException
      */
     private function parseContent(string $content, int $id): array
     {
         try {
             $domCrawler = new DomCrawler($content);
+
+            // Check if this is a park page instead of a coaster page
+            if ($this->isParkPage($domCrawler)) {
+                $this->logger->warning('Page is a park page, not a coaster page', ['id' => $id]);
+                $this->errorSummary?->logError($id, 'This is a park page, not a coaster page');
+                throw new IsParcEntryException(sprintf('ID %d points to a park page, not a coaster page', $id));
+            }
+
             $data = [];
 
             $this->logger->debug('Parsing HTML content');
@@ -173,6 +187,21 @@ class Crawler
                 $statusElement = $domCrawler->filter('#feature p');
                 if ($statusElement->count() > 0) {
                     $data['status'] = $statusElement->text();
+
+                    // Extract all datetime values from time elements
+                    $timeElements = $statusElement->filter('time');
+                    $data['statusDate'] = [];
+
+                    if ($timeElements->count() > 0) {
+                        $timeElements->each(function (DomCrawler $node) use (&$data) {
+                            $datetime = $node->attr('datetime');
+                            if ($datetime !== null) {
+                                $data['statusDate'][] = $datetime;
+                            }
+                        });
+                        $this->logger->debug('Extracted dates', ['dates' => $data['statusDate']]);
+                    }
+
                     $this->logger->debug('Extracted status', ['status' => $data['status']]);
                 } else {
                     $this->logger->warning('Status element not found');

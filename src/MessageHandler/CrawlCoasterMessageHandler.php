@@ -6,6 +6,10 @@ use App\Message\CrawlCoasterMessage;
 use App\Service\Rcdb\Crawler;
 use App\Service\Rcdb\ErrorSummaryService;
 use App\Service\Rcdb\ImportService;
+use App\Service\Rcdb\IsNeitherCoasterNorParcEntryException;
+use App\Service\Rcdb\IsParcEntryException;
+use Doctrine\DBAL\Exception\LockWaitTimeoutException;
+use Exception;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -42,8 +46,21 @@ final readonly class CrawlCoasterMessageHandler
             $this->importService->importFromCrawlerArray($id, $rawValues, $message->isDryRun());
 
             $this->logger->info(sprintf('Successfully crawled coaster ID %d (Dry run: %s)', $id, $message->isDryRun() ? 'yes' : 'no'));
-        } catch (\Exception $e) {
-            dd($e);
+        } catch (Exception $e) {
+            if ($e instanceof IsParcEntryException) {
+                // TODO: Handle park entry
+                return;
+            }
+            else if ($e instanceof IsNeitherCoasterNorParcEntryException) {
+                return;
+            }
+            else if ($e instanceof LockWaitTimeoutException) {
+                dd('Saving to db failed');
+            }
+            else{
+                dd($e);
+            }
+
             $this->errorSummary->logError($id, $e->getMessage());
             $this->logger->error(sprintf('Failed to crawl coaster ID %d: %s', $id, $e->getMessage()));
         }

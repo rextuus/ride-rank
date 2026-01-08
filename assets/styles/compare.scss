@@ -214,3 +214,17 @@ img {
         opacity: 1;
     }
 }
+
+.ridden-btn{
+    border-radius: 999px; // pill shape
+    padding: 0.7rem 1rem;
+    font-weight: 400;
+    border: none;
+    font-size: 0.875rem;
+    &.btn-danger{
+        background-color: rgba(253, 0, 0, 0.3);
+    }
+    &.btn-success{
+        background-color: rgba(0, 255, 0, 0.3);
+    }
+}

@@ -50,7 +50,7 @@ class TestCrawlerCommand extends Command
         try {
             $data = $this->crawler->fetchRollerCoaster($id);
             
-            $coaster = $this->importService->importFromCrawlerArray($id, $data);
+            $coaster = $this->importService->importFromCrawlerArray($id, $data, false);
             
             $io->success(sprintf('Coaster "%s" (ID: %d) imported successfully', $coaster->getName(), $coaster->getId()));
 
