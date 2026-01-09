@@ -1,3 +1,4 @@
+{% import 'macros/_coaster_stats.html.twig' as coasterStats %}
 
 
 {% macro coaster_card(coaster) %}
@@ -25,7 +26,11 @@
                 <p class="card-text small mb-0">{{ park }}<br><em>{{ country }}</em></p>
             </div>
             <div class="card-footer p-1 bg-transparent border-0">
-                <button class="btn ridden-btn {{ coaster.isSeen ? 'btn-success' : 'btn-danger' }} w-100"
+                {% set buttonClass = coaster.isSeen ? 'btn-success' : 'btn-danger' %}
+                {% if not app.user %}
+                    {% set buttonClass = 'btn-secondary' %}
+                {% endif %}
+                <button class="btn ridden-btn {{ buttonClass }} w-100"
                         data-action="click->live#action"
                         data-live-action-param="toggleSeen"
                         data-live-id-param="{{ coaster.id }}"
@@ -42,47 +47,24 @@
             <div class="card-body p-2 d-flex flex-column justify-content-center h-100">
                 <h5 class="card-title mb-2">{{ name }}</h5>
                 {% if coaster.track %}
-                    <dl class="small text-start mb-0">
-                        {% if coaster.track.length %}
-                            <dt class="fw-bold">Länge</dt>
-                            <dd class="mb-2">{{ coaster.track.length|round(2) }} m</dd>
-                        {% endif %}
-                        {% if coaster.track.height %}
-                            <dt class="fw-bold">Höhe</dt>
-                            <dd class="mb-2">{{ coaster.track.height|round }} m</dd>
-                        {% endif %}
-                        {% if coaster.track.speed %}
-                            <dt class="fw-bold">Geschwindigkeit</dt>
-                            <dd class="mb-2">{{ coaster.track.speed|round }} km/h</dd>
-                        {% endif %}
-                        {% if coaster.track.inversions %}
-                            <dt class="fw-bold">Inversionen</dt>
-                            <dd class="mb-2">{{ coaster.track.inversions }}</dd>
-                        {% endif %}
-                        {% if coaster.track.duration %}
-                            <dt class="fw-bold">Dauer</dt>
-                            <dd class="mb-2">{{ coaster.track.duration }} Sekunden</dd>
-                        {% endif %}
-                        {% if coaster.track.drop %}
-                            <dt class="fw-bold">Drop</dt>
-                            <dd class="mb-2">{{ coaster.track.drop|round }}°</dd>
-                        {% endif %}
-                    </dl>
+                    {% set track = coaster.track %}
+                    {{ coasterStats.stats(coaster.track) }}
                 {% else %}
                     <p class="text-muted small">Keine Detailinformationen verfügbar</p>
                 {% endif %}
             </div>
-            <div class="card-footer p-1 bg-transparent border-0">
-                <button class="btn btn-sm {{ coaster.isSeen ? 'btn-success' : 'btn-outline-secondary' }} w-100"
-                        data-action="click->live#action"
-                        data-live-action-param="toggleSeen"
-                        data-live-id-param="{{ coaster.id }}"
-                        {% if not app.user %}disabled title="Login zum Markieren"{% endif %}
-                        onclick="event.stopPropagation();">
-                    {{ ux_icon(coaster.isSeen ? 'lucide:check-circle' : 'lucide:circle', {style: 'height: 1.2em; width: 1.2em;'}) }}
-                    {{ coaster.isSeen ? 'Gesehen' : 'Markieren' }}
-                </button>
-            </div>
+
+{#            <div class="card-footer p-1 bg-transparent border-0">#}
+{#                <button class="btn btn-sm {{ coaster.isSeen ? 'btn-success' : 'btn-outline-secondary' }} w-100"#}
+{#                        data-action="click->live#action"#}
+{#                        data-live-action-param="toggleSeen"#}
+{#                        data-live-id-param="{{ coaster.id }}"#}
+{#                        {% if not app.user %}disabled title="Login zum Markieren"{% endif %}#}
+{#                        onclick="event.stopPropagation();">#}
+{#                    {{ ux_icon(coaster.isSeen ? 'lucide:check-circle' : 'lucide:circle', {style: 'height: 1.2em; width: 1.2em;'}) }}#}
+{#                    {{ coaster.isSeen ? 'Gesehen' : 'Markieren' }}#}
+{#                </button>#}
+{#            </div>#}
         </div>
     </div>
 {% endmacro %}

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Service\Rcdb;
 
+use App\Service\Rcdb\Exception\IsParcEntryException;
+use App\Service\Rcdb\Exception\RcdbFetchException;
+use App\Service\Rcdb\Exception\RcdbParseException;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use RuntimeException;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\DomCrawler\Crawler as DomCrawler;
@@ -52,29 +54,22 @@ class Crawler
     public function __construct(
         private readonly HttpClientInterface $httpClient,
         private readonly LoggerInterface $logger = new NullLogger(),
-        private ?ErrorSummaryService $errorSummary = null
+        private readonly ?ErrorSummaryService $errorSummary = null
     ) {
     }
 
     /**
      * @return array<string, mixed>
-     * @throws RuntimeException
+     * @throws RcdbFetchException
+     * @throws RcdbParseException
+     * @throws IsParcEntryException
      */
     public function fetchRollerCoaster(int $id): array
     {
         $url = sprintf('%s/%d.htm', self::BASE_URL, $id);
         $this->logger->info('Fetching roller coaster data', ['id' => $id, 'url' => $url]);
 
-        try {
-            return $this->fetchAndParseUrl($url, $id);
-        } catch (Exception $e) {
-            $this->logger->error('Failed to fetch roller coaster data', [
-                'id' => $id,
-                'url' => $url,
-                'error' => $e->getMessage(),
-            ]);
-            throw new RuntimeException(sprintf('Failed to fetch roller coaster data for ID %d: %s', $id, $e->getMessage()), 0, $e);
-        }
+        return $this->fetchAndParseUrl($url, $id);
     }
 
     private function isParkPage(DomCrawler $domCrawler): bool
@@ -86,7 +81,8 @@ class Crawler
 
     /**
      * @return array<string, mixed>
-     * @throws RuntimeException
+     * @throws RcdbFetchException
+     * @throws RcdbParseException
      */
     private function fetchAndParseUrl(string $url, int $id): array
     {
@@ -96,26 +92,32 @@ class Crawler
 
             $this->logger->debug('Successfully fetched content', ['url' => $url]);
 
-
-            return  $this->parseContent($content, $id);
+            return $this->parseContent($content, $id);
 
         } catch (ExceptionInterface $e) {
             $this->logger->error('HTTP request failed', [
                 'url' => $url,
                 'error' => $e->getMessage(),
             ]);
-            throw new RuntimeException(sprintf('Failed to fetch content from %s: %s', $url, $e->getMessage()), 0, $e);
+
+            throw new RcdbFetchException(sprintf('Failed to fetch content from %s: %s', $url, $e->getMessage()), 0, $e);
         } catch (Exception $e) {
+            if ($e instanceof IsParcEntryException) {
+                throw $e;
+            }
+
             $this->logger->error('Failed to parse content', [
                 'url' => $url,
                 'error' => $e->getMessage(),
             ]);
-            throw new RuntimeException(sprintf('Failed to parse content from %s: %s', $url, $e->getMessage()), 0, $e);
+
+            throw new RcdbParseException(sprintf('Failed to parse content from %s: %s', $url, $e->getMessage()), 0, $e);
         }
     }
 
     /**
      * @return array<string, mixed>
+     * @throws RcdbParseException
      */
     private function parseContent(string $content, int $id): array
     {
@@ -126,7 +128,14 @@ class Crawler
             if ($this->isParkPage($domCrawler)) {
                 $this->logger->warning('Page is a park page, not a coaster page', ['id' => $id]);
                 $this->errorSummary?->logError($id, 'This is a park page, not a coaster page');
-                throw new IsParcEntryException(sprintf('ID %d points to a park page, not a coaster page', $id));
+
+                $parkName = null;
+                $nameElement = $domCrawler->filter('#feature h1');
+                if ($nameElement->count() > 0) {
+                    $parkName = $nameElement->text();
+                }
+
+                throw new IsParcEntryException(sprintf('ID %d points to a park page, not a coaster page', $id), 0, null, $parkName);
             }
 
             $data = [];
@@ -248,18 +257,60 @@ class Crawler
                 $this->errorSummary?->logError($id, 'Failed to extract categories: ' . $e->getMessage());
             }
 
-            // Extract manufacturer
+
+            // Extract manufacturer and model
             try {
-                $imagesElement = $domCrawler->filter('.scroll p a');
-                if ($imagesElement->count() > 0) {
-                    $data['manufacturer'] = $imagesElement->first()->text();
-                    $this->logger->debug('Extracted manufacturer', ['manufacturer' => $data['manufacturer']]);
+                $scrollElement = $domCrawler->filter('.scroll p');
+                if ($scrollElement->count() > 0) {
+                    $paragraph = $scrollElement;
+
+                    // Extract manufacturer (first link)
+                    $manufacturerLink = $paragraph->filter('a')->first();
+                    if ($manufacturerLink->count() > 0) {
+                        $data['manufacturer'] = $manufacturerLink->text();
+                        $this->logger->debug('Extracted manufacturer', ['manufacturer' => $data['manufacturer']]);
+                    }
+
+                    // Extract model information (all links after "Modell:")
+                    $allLinks = $paragraph->filter('a');
+                    if ($allLinks->count() > 1) {
+                        $data['model'] = [];
+                        $foundModellText = false;
+
+                        $allLinks->each(function (DomCrawler $link, $index) use (&$data, &$foundModellText) {
+                            // Skip the first link (manufacturer)
+                            if ($index === 0) {
+                                return;
+                            }
+
+                            $url = $link->attr('href');
+                            preg_match('~id=(\d+)|/(\d+).htm~', $url, $matches);
+                            $id = null;
+                            if (isset($matches[1]) && $matches[1]) {
+                                $id = (int) $matches[1];
+                            } elseif (isset($matches[2]) && $matches[2]) {
+                                $id = (int) $matches[2];
+                            }
+
+                            $data['model'][] = [
+                                'ident' => $link->text(),
+                                'id' => $id,
+                                'url' => $url,
+                            ];
+                        });
+
+                        if (!empty($data['model'])) {
+                            $this->logger->debug('Extracted model', ['model' => $data['model']]);
+                        }
+                    } else {
+                        $this->logger->warning('Model elements not found');
+                    }
                 } else {
-                    $this->logger->warning('Manufacturer element not found');
+                    $this->logger->warning('Manufacturer/Model container not found');
                 }
             } catch (Exception $e) {
-                $this->logger->warning('Failed to extract manufacturer', ['error' => $e->getMessage()]);
-                $this->errorSummary?->logError($id, 'Failed to extract manufacturer: ' . $e->getMessage());
+                $this->logger->warning('Failed to extract manufacturer/model', ['error' => $e->getMessage()]);
+                $this->errorSummary?->logError($id, 'Failed to extract manufacturer/model: ' . $e->getMessage());
             }
 
             // Extract specifications
@@ -373,9 +424,13 @@ class Crawler
             $this->logger->info('Successfully parsed HTML content', ['data_keys' => array_keys($data)]);
             return $data;
         } catch (Exception $e) {
+            if ($e instanceof IsParcEntryException) {
+                throw $e;
+            }
+
             $this->logger->error('Failed to parse HTML content', ['error' => $e->getMessage()]);
             $this->errorSummary?->logError($id, 'Failed to parse HTML content: ' . $e->getMessage());
-            throw new RuntimeException(sprintf('Failed to parse HTML content: %s', $e->getMessage()), 0, $e);
+            throw new RcdbParseException(sprintf('Failed to parse HTML content: %s', $e->getMessage()), 0, $e);
         }
     }
 

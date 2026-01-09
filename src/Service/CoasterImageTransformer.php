@@ -33,19 +33,40 @@ readonly class CoasterImageTransformer
     TASK: Artistic Watercolor (Wasserfarben) Transformation.
     
     AESTHETIC (Hand-Painted Aquarelle):
-    1. ART STYLE: A loose, expressive Watercolor painting (Aquarell). Use visible wet-on-wet paint effects, pigment blooms, and artistic splashes.
-    2. BRUSHWORK: Soft, flowing edges. It must look like a hand-painted piece of art on paper, strictly avoiding photographic precision.
-    3. COLORS: Use a desaturated "Hand-Tinted" vintage palette. Incorporate the original colors from the photo (like the ride's paint), but render them as muted, faded watercolor washes.
+    1. ART STYLE: A loose, expressive watercolor painting (Aquarell). Visible wet-on-wet effects, pigment blooms, watercolor backruns, and subtle artistic splashes.
+    2. BRUSHWORK: Soft, organic, flowing edges with painterly imperfections. Clearly hand-painted, never photographic.
+    3. COLORS: Desaturated, hand-tinted vintage palette. Original photo colors are preserved but rendered as muted watercolor washes.
     
-    PAPER & BACKGROUND:
-    1. CANVAS: The entire background is heavy, textured, cold-pressed watercolor paper in a warm "Creamy Antique White" or "Aged Beige."
-    2. NO WHITE SPACE: The background wash must extend to all edges of the 3:4 frame. Strictly NO pure digital white (#FFFFFF).
-    3. NO BORDERS: No frames or white margins. The paint flows to the edges of the creamy paper.
+    PAPER & CANVAS (VERY IMPORTANT):
+    1. FORMAT: Final image is always 3:4 aspect ratio.
+    2. PAPER: Heavy, textured, cold-pressed watercolor paper in warm creamy antique white / aged beige (never pure white).
+    3. PAINT COVERAGE:
+       - Watercolor paint must cover approximately 85–90% of the canvas.
+       - The subject should fill the frame confidently.
+       - Visible paper is subtle and intentional, never dominant.
+    4. ASPECT-RATIO HANDLING:
+       - If the source image is landscape, allow slightly more visible paper at the top and bottom.
+       - Side edges should remain mostly painted.
+       - Transitions from paint to paper must be soft, organic, and irregular.
+    5. NO HARD BORDERS:
+       - No frames, no clean margins, no straight edges.
+       - Paint fades naturally into the paper texture.
+    
+    COMPOSITION:
+    1. SUBJECT:
+       - Transform the rollercoaster into watercolor style.
+       - Preserve the overall structure and silhouette.
+       - Simplify mechanical details into expressive brushstrokes.
+    2. BACKGROUND:
+       - Background elements are loosely suggested and partially washed out.
+       - Atmospheric perspective and gentle fading into paper.
+    3. NEGATIVE SPACE:
+       - Any remaining paper acts as breathing space, not empty background.
     
     STRICT CONSTRAINTS:
-    1. SUBJECT: Transform the rollercoaster into this watercolor style. Preserve the basic structure but simplify the mechanical details into artistic brushstrokes.
-    2. NO REALISM: This is a painting. Do not use photographic textures or sharp digital filters.
-    3. NO TEXT: Zero letters or numbers.
+    1. NO REALISM: This must look like a traditional watercolor painting, not a photo.
+    2. NO TEXT: No letters, numbers, logos, or watermarks.
+    3. NO DIGITAL LOOK: No sharp edges, no photo filters, no graphic design style.
     TEXT;
 
         // 1. Generate image via Gemini
@@ -61,8 +82,11 @@ readonly class CoasterImageTransformer
 
         try {
             // 3. Upload to Cloudinary
+            //create random slug
+            $slug = uniqid();
+
             $uploadResult = $this->cloudinaryApiGateway->uploadImage($tempPath, [
-                'folder' => 'coasters/cartoonized',
+                'folder' => 'coasters/images',
                 'public_id' => (string) $coaster->getId(),
                 'overwrite' => true,
             ]);

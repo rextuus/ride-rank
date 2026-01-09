@@ -10,7 +10,12 @@ use Doctrine\ORM\Mapping as ORM;
 class CoasterMetadata
 {
     #[ORM\Id]
-    #[ORM\OneToOne(targetEntity: Coaster::class, inversedBy: 'metadata', cascade: ['persist', 'remove'])]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: Coaster::class, inversedBy: 'metadata', cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: false)]
     private ?Coaster $coaster = null;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
@@ -22,6 +27,11 @@ class CoasterMetadata
     public function __construct(?Coaster $coaster = null)
     {
         $this->coaster = $coaster;
+    }
+
+    public function getId(): ?int
+    {
+        return $this->id;
     }
 
     public function getCoaster(): ?Coaster

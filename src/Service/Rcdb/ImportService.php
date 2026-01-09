@@ -16,11 +16,13 @@ use App\Entity\Category;
 use App\Entity\Coaster;
 use App\Entity\CoasterMetadata;
 use App\Entity\Detail;
+use App\Entity\Model;
 use App\Entity\Location;
 use App\Entity\Manufacturer;
 use App\Entity\Track;
 use App\Entity\TrackElement;
 use App\Entity\Train;
+use App\Service\Rcdb\Exception\IsNeitherCoasterNorParcEntryException;
 use App\Enum\DetailType;
 use App\Enum\OperatingStatus;
 use Doctrine\ORM\EntityManagerInterface;
@@ -34,6 +36,7 @@ readonly class ImportService
 
     /**
      * @param array<string, mixed> $data
+     * @throws IsNeitherCoasterNorParcEntryException
      */
     public function importFromCrawlerArray(int $rcdbId, array $data, bool $dryRun = false): Coaster
     {
@@ -61,6 +64,11 @@ readonly class ImportService
         $categories = array_map(
             fn(array $cat) => new CategoryData($cat['ident'], $cat['id'], $cat['url']),
             $data['categories'] ?? []
+        );
+
+        $models = array_map(
+            fn(array $m) => new CategoryData($m['ident'], $m['id'], $m['url']),
+            $data['model'] ?? []
         );
 
         // Extract opening year (first date from statusDate array)
@@ -127,6 +135,7 @@ readonly class ImportService
             $openingYear,
             $categories,
             $data['manufacturer'] ?? null,
+            $models,
             $track,
             $train,
             $images,
@@ -150,6 +159,10 @@ readonly class ImportService
 
         $status = OperatingStatus::tryFrom($dto->status);
         if ($status === null) {
+            if (str_contains($dto->status, 'http') || $dto->status === '' || str_contains($dto->status, 'Telephone')){
+                throw new IsNeitherCoasterNorParcEntryException('Unknown operating status: ' . $dto->status);
+            }
+
             throw new Exception('Unknown operating status: ' . $dto->status);
         }
 
@@ -186,6 +199,41 @@ readonly class ImportService
             }
         }
         $coaster->setManufacturer($manufacturer);
+
+        // Handle model information
+        foreach ($dto->model as $modelData) {
+            $model = null;
+            if ($modelData->id) {
+                $model = $this->entityManager->getRepository(Model::class)->findOneBy(['rcdbId' => $modelData->id]);
+            }
+
+            if (!$model) {
+                $model = $this->entityManager->getRepository(Model::class)->findOneBy(['ident' => $modelData->ident]);
+            }
+
+            if (!$model) {
+                $model = $this->entityManager->getRepository(Model::class)->findOneBy(['name' => $modelData->ident]);
+            }
+
+            if (!$model) {
+                $model = new Model();
+                $model->setName($modelData->ident);
+                $model->setIdent($modelData->ident);
+                if ($modelData->id) {
+                    $model->setRcdbId($modelData->id);
+                }
+                $model->setRcdbUrl($modelData->url);
+
+                if (!$dryRun) {
+                    $this->entityManager->persist($model);
+                    $this->entityManager->flush();
+                }
+            }
+
+            if (!$coaster->getModels()->contains($model)) {
+                $coaster->addModel($model);
+            }
+        }
 
         foreach ($dto->location as $index => $locData) {
             $location = $this->entityManager->getRepository(Location::class)->findOneBy(['rcdbId' => $locData->id]);

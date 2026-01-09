@@ -50,8 +50,11 @@ class Coaster
     #[ORM\Column(type: Types::SMALLINT, nullable: true, options: ['default' => null])]
     private ?int $openingYear = null;
 
-    #[ORM\OneToOne(targetEntity: CoasterMetadata::class, mappedBy: 'coaster', cascade: ['persist', 'remove'], fetch: 'LAZY')]
-    private ?CoasterMetadata $metadata = null;
+    /**
+     * @var Collection<int, CoasterMetadata>
+     */
+    #[ORM\OneToMany(targetEntity: CoasterMetadata::class, mappedBy: 'coaster', cascade: ['persist', 'remove'], fetch: 'LAZY', orphanRemoval: true)]
+    private Collection $metadata;
 
     #[ORM\OneToOne(inversedBy: 'coaster', cascade: ['persist', 'remove'])]
     private ?Train $train = null;
@@ -74,12 +77,20 @@ class Coaster
     #[ORM\ManyToMany(targetEntity: Detail::class, inversedBy: 'coasters')]
     private Collection $details;
 
+    /**
+     * @var Collection<int, Model>
+     */
+    #[ORM\ManyToMany(targetEntity: Model::class, inversedBy: 'coasters')]
+    private Collection $models;
+
     public function __construct()
     {
         $this->locations = new ArrayCollection();
         $this->categories = new ArrayCollection();
         $this->details = new ArrayCollection();
-        $this->metadata = new CoasterMetadata($this);
+        $this->models = new ArrayCollection();
+        $this->metadata = new ArrayCollection();
+        $this->metadata->add(new CoasterMetadata($this));
     }
 
     public function getId(): ?int
@@ -125,15 +136,17 @@ class Coaster
 
     public function getImages(): ?array
     {
-        return $this->metadata?->getImages();
+        return $this->metadata->first() ? $this->metadata->first()->getImages() : null;
     }
 
     public function setImages(?array $images): static
     {
-        if (!$this->metadata) {
-            $this->metadata = new CoasterMetadata($this);
+        $metadata = $this->metadata->first();
+        if (!$metadata) {
+            $metadata = new CoasterMetadata($this);
+            $this->metadata->add($metadata);
         }
-        $this->metadata->setImages($images);
+        $metadata->setImages($images);
         return $this;
     }
 
@@ -245,6 +258,30 @@ class Coaster
         return $this;
     }
 
+    /**
+     * @return Collection<int, Model>
+     */
+    public function getModels(): Collection
+    {
+        return $this->models;
+    }
+
+    public function addModel(Model $model): static
+    {
+        if (!$this->models->contains($model)) {
+            $this->models->add($model);
+        }
+
+        return $this;
+    }
+
+    public function removeModel(Model $model): static
+    {
+        $this->models->removeElement($model);
+
+        return $this;
+    }
+
     public function getRating(): float
     {
         return $this->rating;
@@ -287,15 +324,17 @@ class Coaster
 
     public function getStatusDates(): ?array
     {
-        return $this->metadata?->getStatusDates();
+        return $this->metadata->first() ? $this->metadata->first()->getStatusDates() : null;
     }
 
     public function setStatusDates(?array $statusDates): static
     {
-        if (!$this->metadata) {
-            $this->metadata = new CoasterMetadata($this);
+        $metadata = $this->metadata->first();
+        if (!$metadata) {
+            $metadata = new CoasterMetadata($this);
+            $this->metadata->add($metadata);
         }
-        $this->metadata->setStatusDates($statusDates);
+        $metadata->setStatusDates($statusDates);
 
         return $this;
     }
@@ -314,12 +353,24 @@ class Coaster
 
     public function getMetadata(): ?CoasterMetadata
     {
-        return $this->metadata;
+        return $this->metadata->first() ?: null;
     }
 
     public function setMetadata(?CoasterMetadata $metadata): static
     {
-        $this->metadata = $metadata;
+        if ($this->metadata->contains($metadata)) {
+            return $this;
+        }
+
+        if ($metadata === null) {
+            $this->metadata->clear();
+            return $this;
+        }
+
+        // We want to keep only one metadata as per issue description
+        $this->metadata->clear();
+        $this->metadata->add($metadata);
+        $metadata->setCoaster($this);
 
         return $this;
     }

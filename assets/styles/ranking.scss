@@ -1,7 +1,13 @@
+@import "variables";
+
 .ranking-card {
     background-color: #faf6f0;
-    border: 1px solid #e2d8c7;
+    border: 1px solid #e3dcc7;
     border-radius: 14px;
+
+    background-image: url('https://res.cloudinary.com/duzqnf8fu/image/upload/v1767737818/background_l5liq5.png');
+    background-size: cover;
+    background-position: center;
 }
 
 .ranking-image-wrapper {
@@ -14,6 +20,7 @@
         object-fit: cover;
         border-radius: 10px;
         display: block;
+        border: 1px solid #e3dcc7;
     }
 
     .position-badge {
@@ -43,6 +50,7 @@
         right: 8px;
         font-size: 0.7rem;
         padding: 0.2rem 0.4rem;
+        background-color: $ridden-background-color;
     }
 }
 

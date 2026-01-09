@@ -1,3 +1,5 @@
+{% import 'macros/_coaster_stats.html.twig' as coasterStats %}
+
 {% extends 'base.html.twig' %}
 
 {% block body %}
@@ -8,32 +10,40 @@
         <div class="position-relative">
             <img src="{{ coaster.image }}" class="img-fluid rounded" alt="{{ coaster.name }}">
             {% if coaster.ridden %}
-                <span class="badge bg-success position-absolute top-0 end-0 m-2">Gefahren</span>
+                <span class="badge common-ridden-badge position-absolute top-0 end-0 m-2">
+                Gefahren
+            </span>
             {% endif %}
         </div>
 
-        <div class="mt-3">
-            <h5>Technische Daten</h5>
-            <ul class="list-unstyled small">
-                <li><strong>Hersteller:</strong> {{ coaster.manufacturer }}</li>
-                <li><strong>Typ:</strong> {{ coaster.type }}</li>
-                <li><strong>Antrieb:</strong> {{ coaster.drive }}</li>
-                <li><strong>Inversionen:</strong> {{ coaster.inversions }}</li>
-                <li><strong>Länge:</strong> {{ coaster.length }}</li>
-                <li><strong>Höhe:</strong> {{ coaster.height }}</li>
-                <li><strong>Baujahr:</strong> {{ coaster.year }}</li>
-            </ul>
+        <div class="mt-4">
+            <h5 class="mb-3">Technische Daten</h5>
+
+            <div class="coaster-stats-wrapper">
+                {{ coasterStats.stats(coaster.track) }}
+            </div>
         </div>
 
-        <!-- Bewertungen-Box -->
         {{ component('Ratings', {
             'avgRating': coaster.avgRating,
             'userRating': coaster.userRating,
             'avgCategories': coaster.avgCategories,
             'userCategories': coaster.userCategories
         }) }}
-
     </div>
 
-    <button class="btn btn-success w-100">Als gefahren markieren</button>
+
+{#    <button class="btn ridden-btn {{ buttonClass }} w-100"#}
+{#            data-action="click->live#action"#}
+{#            data-live-action-param="toggleSeen"#}
+{#            data-live-id-param="{{ coaster.id }}"#}
+{#            {% if not app.user %}disabled title="Login zum Markieren"{% endif %}#}
+{#            onclick="event.stopPropagation();">#}
+{#        {{ ux_icon(coaster.isSeen ? 'lucide:check-circle' : 'lucide:circle', {style: 'height: 1.2em; width: 1.2em;'}) }}#}
+{#        {{ coaster.isSeen ? 'Gefahren' : 'Nicht gefahren' }}#}
+{#    </button>#}
+    <div class="mb-3">
+        <button class="btn ridden-btn btn-success w-100">Gefahren</button>
+
+    </div>
 {% endblock %}

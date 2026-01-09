@@ -11,6 +11,7 @@ use App\Repository\RiddenCoasterRepository;
 use App\Service\Rating\EloRatingService;
 use App\Service\Rating\MatchupSelectionService;
 use App\Service\Rating\PairwiseComparisonService;
+use App\Service\UnitConversionService;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -35,6 +36,9 @@ class CoasterCompare
     #[LiveProp]
     public ?DateTime $lastInteraction = null;
 
+    #[LiveProp]
+    public bool $useMetricUnits = true;
+
     public function __construct(
         private readonly CoasterRepository $coasterRepository,
         private readonly RiddenCoasterRepository $riddenCoasterRepository,
@@ -43,6 +47,7 @@ class CoasterCompare
         private readonly PairwiseComparisonService $pairwiseComparisonService,
         private readonly Security $security,
         private readonly EntityManagerInterface $entityManager,
+        private readonly UnitConversionService $unitConversionService,
     ) {
         $this->lastInteraction = new DateTime();
     }
@@ -189,15 +194,16 @@ class CoasterCompare
         shuffle($coasters);
 
         // temp
-        $left = $this->coasterRepository->find(203);
-        $right = $this->coasterRepository->find(201);
+        $left = $this->coasterRepository->find(3);
+        $right = $this->coasterRepository->find(2);
 
-//        $coasters = $this->matchupSelectionService->getNextMatchup(null);
-//        $left = $coasters[0];
-//        $right = $coasters[1];
+        $coasters = $this->matchupSelectionService->getNextMatchup(null);
+        $left = $coasters[0];
+        $right = $coasters[1];
 
         $this->left = $this->normalizeCoaster($left);
         $this->right = $this->normalizeCoaster($right);
+        $this->markFavorites();
     }
 
     private function normalizeCoaster(Coaster $coaster): array
@@ -222,14 +228,32 @@ class CoasterCompare
         $track = null;
         if ($coaster->getTrack()) {
             $trackEntity = $coaster->getTrack();
+
             $track = [
-                'length' => $trackEntity->getLength(),
-                'height' => $trackEntity->getHeight(),
-                'speed' => $trackEntity->getSpeed(),
-                'inversions' => $trackEntity->getInversions(),
-                'duration' => $trackEntity->getDuration(),
-                'drop' => $trackEntity->getDrop(),
-                'verticalAngle' => $trackEntity->getVerticalAngle(),
+                'length' => [
+                    'value' => $this->convertLength($trackEntity->getLength()),
+                    'favorite' => false,
+                    'unit' => $this->useMetricUnits ? 'm' : 'ft'
+                ],
+                'height' => [
+                    'value' => $this->convertLength($trackEntity->getHeight()),
+                    'favorite' => false,
+                    'unit' => $this->useMetricUnits ? 'm' : 'ft'
+                ],
+                'speed' => [
+                    'value' => $this->convertSpeed($trackEntity->getSpeed()),
+                    'favorite' => false,
+                    'unit' => $this->useMetricUnits ? 'km/h' : 'mph'
+                ],
+                'inversions' => ['value' => $trackEntity->getInversions() ?: 0, 'favorite' => false],
+                'duration' => ['value' => $trackEntity->getDuration(), 'favorite' => false, 'unit' => 's'],
+                'drop' => [
+                    'value' => $this->convertLength($trackEntity->getDrop()),
+                    'favorite' => false,
+                    'unit' => $this->useMetricUnits ? 'm' : 'ft'
+                ],
+                'verticalAngle' => ['value' => $trackEntity->getVerticalAngle(), 'favorite' => false, 'unit' => '°'],
+                'manufacturer' => ['value' => $coaster->getManufacturer()->getName(), 'favorite' => false],
             ];
         }
 
@@ -251,5 +275,52 @@ class CoasterCompare
             'track' => $track,
             'isSeen' => $isSeen,
         ];
+    }
+
+    private function markFavorites()
+    {
+        // compare values of left and right track elements and set favorite flag
+        foreach ($this->left['track'] as $key => $leftValue) {
+            $rightValue = $this->right['track'][$key];
+            // both are null => no winner
+            if ($leftValue['value'] === null && $rightValue['value'] === null) {
+                continue;
+            }
+
+            // only one value is null => winner is other one
+            if ($leftValue['value'] === null && $rightValue['value'] !== null) {
+                $this->right['track'][$key]['favorite'] = true;
+                continue;
+            }
+
+            if ($leftValue['value'] !== null && $rightValue['value'] === null) {
+                $this->left['track'][$key]['favorite'] = true;
+                continue;
+            }
+
+            // bot values
+            if ($leftValue['value'] > $rightValue['value']) {
+                $this->left['track'][$key]['favorite'] = true;
+            }
+            if ($leftValue['value'] < $rightValue['value']) {
+                $this->right['track'][$key]['favorite'] = true;
+            }
+        }
+    }
+
+    private function convertLength(?float $feet): ?float
+    {
+        if ($feet === null) {
+            return null;
+        }
+        return $this->useMetricUnits ? $this->unitConversionService->feetToMeters($feet) : $feet;
+    }
+
+    private function convertSpeed(?float $mph): ?float
+    {
+        if ($mph === null) {
+            return null;
+        }
+        return $this->useMetricUnits ? $this->unitConversionService->mphToKmh($mph) : $mph;
     }
 }

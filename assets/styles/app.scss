@@ -40,3 +40,72 @@
     bottom: 8px;
     right: 8px;
 }
+
+// mark ridden (used everywhere)
+.ridden-btn{
+    border-radius: 999px; // pill shape
+    padding: 0.7rem 1rem;
+    font-weight: 400;
+    border: none;
+    font-size: 0.875rem;
+    &.btn-danger{
+        background-color: rgba(253, 0, 0, 0.3);
+    }
+    &.btn-success{
+        background-color: $ridden-background-color;
+    }
+}
+.common-ridden-badge{
+    background-color: $ridden-background-color;
+    color: #3a3a3a;
+}
+
+.coaster-stats-wrapper .spec-item {
+    margin-bottom: 0.75rem;
+}
+
+.coaster-detail-card .spec-value {
+    font-size: 0.95rem;
+}
+
+
+
+.spec-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;  // Space between icon and content
+
+    .spec-icon{
+        img {
+            max-width: 40px;
+            height: auto;
+            object-fit: contain;
+            flex-shrink: 0;  // Prevents icon from shrinking
+        }
+    }
+
+    .spec-content {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+
+        .spec-label {
+            color: #666;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 0.1rem;
+        }
+
+        .spec-value {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+
+    }
+}

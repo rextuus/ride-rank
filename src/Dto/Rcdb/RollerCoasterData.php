@@ -9,6 +9,7 @@ class RollerCoasterData
     /**
      * @param LocationData[] $location
      * @param CategoryData[] $categories
+     * @param CategoryData[] $model
      * @param string[] $details
      * @param string[] $facts
      * @param string[] $history
@@ -22,6 +23,7 @@ class RollerCoasterData
         public readonly ?int $openingYear,
         public readonly array $categories,
         public readonly ?string $manufacturer,
+        public readonly array $model,
         public readonly ?TrackData $track,
         public readonly ?TrainData $train,
         public readonly ImageData $images,

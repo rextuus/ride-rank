@@ -9,6 +9,7 @@ use App\Entity\Track;
 use App\Entity\TrackElement;
 use App\Service\Rcdb\Crawler;
 use App\Service\Rcdb\ImportService;
+use App\Service\Rcdb\RcdbPaginatedListCrawler;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -25,7 +26,8 @@ class TestCrawlerCommand extends Command
 {
     public function __construct(
         private readonly Crawler $crawler,
-        private readonly ImportService $importService
+        private readonly ImportService $importService,
+        private readonly RcdbPaginatedListCrawler $listCrawler
     ) {
         parent::__construct();
     }

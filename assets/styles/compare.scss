@@ -171,7 +171,6 @@
 
  //Loading Overlay
 img {
-    border-bottom: 1px solid $brand-border;
     object-fit: cover;
     height: 300px;
     transition: opacity 0.3s ease-in-out;
@@ -215,16 +214,12 @@ img {
     }
 }
 
-.ridden-btn{
-    border-radius: 999px; // pill shape
-    padding: 0.7rem 1rem;
-    font-weight: 400;
-    border: none;
-    font-size: 0.875rem;
-    &.btn-danger{
-        background-color: rgba(253, 0, 0, 0.3);
-    }
-    &.btn-success{
-        background-color: rgba(0, 255, 0, 0.3);
+.fav-star-icon{
+    img{
+        max-width: 15px;
+        height: auto;
+        object-fit: contain;
+        flex-shrink: 0;
+        border-bottom: none;
     }
 }

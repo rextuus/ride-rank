@@ -3,9 +3,11 @@
 namespace App\Command;
 
 use App\Message\CrawlCoasterMessage;
+use App\Message\ParseRcdbListPageMessage;
 use App\Service\Rcdb\ErrorSummaryService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -28,8 +30,8 @@ class RcdbCrawlTestCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('start', null, InputOption::VALUE_REQUIRED, 'Start RCDB ID', 1)
-            ->addOption('limit', null, InputOption::VALUE_REQUIRED, 'Number of entries to crawl', 1000)
+            ->addArgument('start', null, InputArgument::REQUIRED )
+            ->addArgument('pages', null, InputArgument::REQUIRED)
             ->addOption('no-dry-run', null, InputOption::VALUE_NONE, 'Really persist to database')
             ->addOption('clear-errors', null, InputOption::VALUE_NONE, 'Clear the error summary before starting')
         ;
@@ -37,6 +39,15 @@ class RcdbCrawlTestCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+        $start = (int) $input->getArgument('start');
+        $pages = (int) $input->getArgument('pages');
+        for ($id = $start; $id < $start + $pages; $id++) {
+            $message = new ParseRcdbListPageMessage($id);
+            $this->messageBus->dispatch($message);
+        }
+
+        return Command::SUCCESS;
+
         $io = new SymfonyStyle($input, $output);
 
         if ($input->getOption('clear-errors')) {
@@ -44,23 +55,23 @@ class RcdbCrawlTestCommand extends Command
             $io->info('Error summary cleared.');
         }
         $start = (int) $input->getOption('start');
-        $limit = (int) $input->getOption('limit');
+        $pages = (int) $input->getOption('limit');
         $dryRun = !$input->getOption('no-dry-run');
 
-        $io->title(sprintf('Triggering crawl for IDs %d to %d', $start, $start + $limit - 1));
+        $io->title(sprintf('Triggering crawl for IDs %d to %d', $start, $start + $pages - 1));
         $io->note(sprintf('Dry run: %s', $dryRun ? 'yes' : 'no'));
 
-        for ($id = $start; $id < $start + $limit; $id++) {
+        for ($id = $start; $id < $start + $pages; $id++) {
             $this->messageBus->dispatch(new CrawlCoasterMessage($id, $dryRun));
             
-            if ($id < $start + $limit - 1) {
+            if ($id < $start + $pages - 1) {
                 $delay = rand(1, 2);
                 $io->writeln(sprintf('Waiting %d seconds before next dispatch...', $delay));
                 sleep($delay);
             }
         }
 
-        $io->success(sprintf('Dispatched %d messages to the bus', $limit));
+        $io->success(sprintf('Dispatched %d messages to the bus', $pages));
 
         return Command::SUCCESS;
     }
