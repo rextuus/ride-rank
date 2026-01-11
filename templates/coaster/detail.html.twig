@@ -3,18 +3,30 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-    <h2 class="mb-3">{{ coaster.name }}</h2>
-    <p class="text-muted">{{ coaster.park }} – <em>{{ coaster.country }}</em></p>
+{#    <h2 class="mb-3">{{ coaster.name }}</h2>#}
+{#    <p class="text-muted">{{ coaster.park }} – <em>{{ coaster.country }}</em></p>#}
 
     <div class="coaster-detail-card mb-4">
-        <div class="position-relative">
+        <div class="position-relative coaster-image-wrapper">
             <img src="{{ coaster.image }}" class="img-fluid rounded" alt="{{ coaster.name }}">
+
+            <div class="coaster-image-title">
+                <h2 class="mb-0">{{ coaster.name }}</h2>
+            </div>
+
+            <div class="coaster-image-meta">
+                <span>{{ coaster.park }}</span>
+                <span class="mx-1">–</span>
+                <em>{{ coaster.country }}</em>
+            </div>
+
             {% if coaster.ridden %}
                 <span class="badge common-ridden-badge position-absolute top-0 end-0 m-2">
-                Gefahren
-            </span>
+            Gefahren
+        </span>
             {% endif %}
         </div>
+
 
         <div class="mt-4">
             <h5 class="mb-3">Technische Daten</h5>

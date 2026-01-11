@@ -21,7 +21,7 @@ final class CoasterController extends AbstractController
     #[Route('/coaster/{id}', name: 'app_coaster_show')]
     public function show(int $id, CoasterRepository $coasterRepository): Response
     {
-        $coaster = $coasterRepository->find(77);
+        $coaster = $coasterRepository->find(1);
 
         $trackEntity = $coaster->getTrack();
         $track = [

@@ -1,94 +1,68 @@
 .coaster-detail-card {
-    background-color: #faf6f0; // leicht getönt, wie deine Karten
-    border: 1px solid #e2d8c7;
-    border-radius: 14px;
-    padding: 1rem;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
 
-    background-image: url('https://res.cloudinary.com/duzqnf8fu/image/upload/v1767737818/background_l5liq5.png');
+    background-image: $background-url-1;
     background-size: cover;
     background-position: center;
+    padding: 1rem;
+    border-radius: 14px; // same as card, subtle rounding
 
-    .badge {
-        font-size: 1.5rem;
-        top: 1px;
-        right: 1px;
-    }
-
-    img {
-        border-radius: 100px;
-        object-fit: cover;
-        width: 100%;
+    .coaster-image-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 14px; // same as card, subtle rounding
         border: 1px solid #e3dcc7;
 
-        //max-height: 500px;
     }
 
-    h5 {
-        margin-top: 1rem;
-        font-weight: 600;
-        font-size: 1.1rem;
-        border-bottom: 1px solid #ddd;
-        padding-bottom: 0.3rem;
-        margin-bottom: 0.6rem;
+    /* very subtle overlay for readability, keep it warm/light */
+    .coaster-image-wrapper::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+                        to bottom,
+                        rgba(250, 246, 240, 0.3) 0%,   // very light warm overlay
+                        rgba(250, 246, 240, 0) 50%,
+                        rgba(250, 246, 240, 0.3) 100%
+        );
+        pointer-events: none;
+        z-index: 1;
     }
 
-    ul {
-        margin: 0;
-        padding-left: 0;
-
-        li {
-            padding: 0.2rem 0;
-            font-size: 0.9rem;
-            color: #444;
-
-            strong {
-                color: #2d2d2d;
-            }
-        }
-    }
-
-    .rating-box {
-        background-color: #fff;
-        border: 1px solid #e2d8c7;
-        border-radius: 12px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-
-        background-image: url('https://res.cloudinary.com/duzqnf8fu/image/upload/v1767737818/background_l5liq5.png');
-        background-size: cover;
-        background-position: center;
-
-        h5 {
-            font-size: 1.1rem;
-            margin-bottom: 0.75rem;
+    /* title top-left */
+    .coaster-image-title {
+        position: absolute;
+        top: 0.8rem;
+        left: 0.8rem;
+        z-index: 2;
+        color: #3a2a1a;  // use your dark brown instead of black
+        h2 {
+            font-size: 1.5rem;
             font-weight: 600;
-        }
-
-        .category-ratings {
-            font-size: 0.9rem;
-
-            .d-flex {
-                border-bottom: 1px solid #f0ebe4;
-                padding-bottom: 0.4rem;
-                margin-bottom: 0.4rem;
-
-                &:last-child {
-                    border-bottom: none;
-                }
-            }
+            margin: 0;
+            text-shadow: none; // remove shadow to keep original light feel
         }
     }
 
-}
+    /* park & country bottom-left */
+    .coaster-image-meta {
+        position: absolute;
+        left: 0.8rem;
+        bottom: 0.1rem;
+        z-index: 2;
+        font-size: 0.9rem;
+        color: #3a2a1a; // same dark brown
+        em {
+            font-style: italic;
+            opacity: 0.9;
+        }
+    }
 
-.btn-success {
-    border-radius: 999px; // pill shape
-    padding: 0.7rem 1rem;
-    font-weight: 600;
-    background-color: #3a2a1a;
-    border: none;
-
-    &:hover {
-        background-color: #2a1d12;
+    /* keep Gefahren badge same as before */
+    .badge {
+        font-size: 1.5rem; // restore original
+        top: 1px;
+        right: 1px;
+        z-index: 3;
     }
 }
