@@ -150,11 +150,52 @@
         &.cols-2 { 
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             @media (min-width: 1200px) {
-                max-width: 900px;
+                max-width: 800px;
+            }
+            .coaster-card {
+                max-width: 400px;
+                margin: 0 auto;
+
+                .coaster-image-wrapper {
+                    .coaster-image-title {
+                        h2, .card-title {
+                            font-size: 0.75rem;
+                        }
+                    }
+                    .coaster-image-meta {
+                        font-size: 0.6rem;
+                    }
+                }
+                .stars {
+                    scale: 0.7;
+                    margin-top: -3px;
+                }
             }
         }
         &.cols-4 {
             grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+            @media (min-width: 1200px) {
+                max-width: 1100px;
+            }
+            .coaster-card {
+                max-width: 250px;
+                margin: 0 auto;
+                
+                .coaster-image-wrapper {
+                    .coaster-image-title {
+                        h2, .card-title {
+                            font-size: 0.65rem;
+                        }
+                    }
+                    .coaster-image-meta {
+                        font-size: 0.55rem;
+                    }
+                }
+                .stars {
+                    scale: 0.6;
+                    margin-top: -5px;
+                }
+            }
             
             @media (max-width: 768px) {
                 gap: 0.5rem;
@@ -165,23 +206,19 @@
                             top: 0.2rem;
                             left: 0.2rem;
                             h2, .card-title {
-                                font-size: 0.6rem;
+                                font-size: 0.55rem;
                             }
                         }
                         .coaster-image-meta {
                             left: 0.2rem;
                             bottom: 0.1rem;
-                            font-size: 0.5rem;
+                            font-size: 0.45rem;
                         }
                     }
                     .stars {
-                        scale: 0.6;
-                        margin-top: -5px;
-                        margin-bottom: -5px;
-                    }
-                    .badge {
-                        font-size: 0.5rem;
-                        padding: 1px 3px;
+                        scale: 0.5;
+                        margin-top: -8px;
+                        margin-bottom: -8px;
                     }
                 }
             }
@@ -199,6 +236,15 @@
             min-width: 0; // Ensure card can shrink
             width: 100%;
 
+            &.not-ridden {
+                .coaster-image-wrapper {
+                    img {
+                        filter: blur(1px) grayscale(20%);
+                        opacity: 0.7;
+                    }
+                }
+            }
+
             &:hover {
                 transform: scale(1.03);
                 z-index: 10;
@@ -206,6 +252,21 @@
                 .info-overlay {
                     opacity: 1;
                 }
+            }
+
+            .ridden-badge {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                z-index: 10;
+                background-color: #44ad44;
+                color: #fff;
+                font-size: 0.7rem;
+                padding: 0.2rem 0.6rem;
+                border-radius: 4px;
+                font-weight: 600;
+                border: 1px solid rgba(0,0,0,0.1);
+                box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
             }
 
             .coaster-image-wrapper {
@@ -220,18 +281,6 @@
                     aspect-ratio: 3 / 4 !important;
                     object-fit: cover !important;
                     display: block !important;
-                }
-
-                .badge {
-                    position: absolute;
-                    top: 5px;
-                    right: 5px;
-                    font-size: 0.6rem;
-                    background-color: rgba(46, 139, 87, 0.9);
-                    color: #fff;
-                    padding: 2px 5px;
-                    border-radius: 3px;
-                    z-index: 3;
                 }
 
                 .coaster-image-title {

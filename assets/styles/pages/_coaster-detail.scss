@@ -6,6 +6,30 @@
     padding: 1rem;
     border-radius: 14px; // same as card, subtle rounding
 
+    &.not-ridden {
+        .coaster-image-wrapper {
+            img {
+                filter: blur(8px) grayscale(40%);
+                opacity: 0.8;
+            }
+        }
+    }
+
+    .ridden-badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        z-index: 10;
+        background-color: #44ad44;
+        color: #fff;
+        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 4px;
+        font-weight: 600;
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    }
+
     .coaster-image-wrapper {
         position: relative;
         overflow: hidden;
@@ -65,11 +89,4 @@
         }
     }
 
-    /* keep Gefahren badge same as before */
-    .badge {
-        font-size: 1.5rem; // restore original
-        top: 1px;
-        right: 1px;
-        z-index: 3;
-    }
 }

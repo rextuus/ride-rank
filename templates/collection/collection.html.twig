@@ -45,10 +45,13 @@
 
                         <div class="coaster-grid cols-{{ columns }}">
                             {% for coaster in coasters %}
-                                <div class="coaster-card position-relative">
+                                <div class="coaster-card position-relative {{ not coaster.ridden ? 'not-ridden' }}">
+                                    {% if coaster.ridden %}
+                                        <span class="badge ridden-badge">Gefahren</span>
+                                    {% endif %}
                                     <div class="coaster-image-wrapper">
                                         <img src="{{ coaster.image }}" class="img-fluid" alt="{{ coaster.name }}">
-                                        
+
                                         <div class="coaster-image-title">
                                             <h5 class="card-title">{{ coaster.name }}</h5>
                                         </div>
@@ -58,10 +61,6 @@
                                             <span class="mx-1">–</span>
                                             <em>{{ coaster.country }}</em>
                                         </div>
-
-                                        {% if coaster.ridden %}
-                                            <span class="badge">Gefahren</span>
-                                        {% endif %}
 
                                         <div class="info-overlay">
                                             <a href="{{ path('app_coaster_show', { id: loop.index }) }}"

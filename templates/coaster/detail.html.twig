@@ -6,7 +6,10 @@
 {#    <h2 class="mb-3">{{ coaster.name }}</h2>#}
 {#    <p class="text-muted">{{ coaster.park }} – <em>{{ coaster.country }}</em></p>#}
 
-    <div class="coaster-detail-card mb-4">
+    <div class="coaster-detail-card mb-4 {{ not coaster.ridden ? 'not-ridden' }} position-relative">
+        {% if coaster.ridden %}
+            <span class="badge ridden-badge">Gefahren</span>
+        {% endif %}
         <div class="position-relative coaster-image-wrapper">
             <img src="{{ coaster.image }}" class="img-fluid rounded" alt="{{ coaster.name }}">
 
@@ -19,12 +22,6 @@
                 <span class="mx-1">–</span>
                 <em>{{ coaster.country }}</em>
             </div>
-
-            {% if coaster.ridden %}
-                <span class="badge common-ridden-badge position-absolute top-0 end-0 m-2">
-            Gefahren
-        </span>
-            {% endif %}
         </div>
 
 
