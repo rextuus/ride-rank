@@ -10,9 +10,19 @@ final class CollectionController extends AbstractController
 {
     // src/Controller/CollectionController.php
     #[Route('/collection', name: 'app_collection')]
-    public function index(): Response
+    public function index(\Symfony\Component\HttpFoundation\Request $request): Response
     {
-        $coasters = [
+        $columns = $request->query->getInt('columns', 2);
+        if (!in_array($columns, [1, 2, 4])) {
+            $columns = 2;
+        }
+
+        $page = $request->query->getInt('page', 1);
+        $limit = 16; // Beispiel-Limit pro Album-Seite
+
+        $coasters = [];
+        // Erzeuge mehr Testdaten für Paginierung
+        $baseCoasters = [
             [
                 'name' => 'Blue Fire',
                 'park' => 'Europa Park',
@@ -63,14 +73,28 @@ final class CollectionController extends AbstractController
             ],
         ];
 
+        for ($i = 0; $i < 40; $i++) {
+            $c = $baseCoasters[$i % count($baseCoasters)];
+            $c['name'] .= ' ' . ($i + 1);
+            $coasters[] = $c;
+        }
+
+        $totalCount = count($coasters);
+        $totalPages = (int) ceil($totalCount / $limit);
+        $offset = ($page - 1) * $limit;
+        $pagedCoasters = array_slice($coasters, $offset, $limit);
+
         // Gruppierung
         $coastersByPark = [];
-        foreach ($coasters as $c) {
+        foreach ($pagedCoasters as $c) {
             $coastersByPark[$c['park']][] = $c;
         }
 
         return $this->render('collection/collection.html.twig', [
             'coastersByPark' => $coastersByPark,
+            'columns' => $columns,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
         ]);
     }
 

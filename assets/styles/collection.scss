@@ -1,76 +1,125 @@
 .collection-page {
-    padding-bottom: 80px; // Platz für Footer
-    background-color: #fff;
+    padding-bottom: 80px;
+    background-color: #f0f0f0; // Etwas dunklerer Hintergrund für das Album
+    min-height: 100vh;
+    padding-top: 2rem;
+
+    &.album-theme {
+        .album-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden; // Contain everything
+            width: 100%; // Ensure it doesn't expand beyond viewport
+            box-sizing: border-box;
+            
+            // "Ringbuch"-Effekt links
+            &::before {
+                content: '';
+                position: absolute;
+                left: 10px;
+                top: 20px;
+                bottom: 20px;
+                width: 20px;
+                background-image: radial-gradient(circle, #ddd 30%, transparent 35%);
+                background-size: 20px 40px;
+                opacity: 0.5;
+            }
+
+            .album-page-inner {
+                border: 1px solid #eee;
+                padding: 1.5rem;
+                min-height: 800px;
+                display: flex;
+                flex-direction: column;
+                min-width: 0; // Prevent flex item from overflowing
+            }
+        }
+    }
 
     h2 {
-        font-size: 1.4rem;
+        font-family: 'Serif', Georgia, serif; // Album-Stil
+        font-size: 1.8rem;
         font-weight: 700;
-        margin-bottom: 1rem;
+        color: #333;
+    }
+
+    .view-controls {
+        .btn-group {
+            .btn {
+                padding: 0.25rem 0.75rem;
+                &.active {
+                    background-color: #3a2a1a;
+                    border-color: #3a2a1a;
+                    color: #fff;
+                }
+            }
+        }
     }
 
     // Filter & Sortieren Buttons
     .collection-header {
         display: flex;
         gap: 0.6rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
 
         .btn {
             display: flex;
             align-items: center;
             gap: 4px;
 
-            border-radius: 999px; // pill shape
+            border-radius: 4px; 
             font-size: 0.9rem;
             font-weight: 500;
-            padding: 0.45rem 1rem;
+            padding: 0.4rem 0.8rem;
 
-            border: 1px solid #3a2a1a;
+            border: 1px solid #ccc;
             background-color: #fff;
-            color: #3a2a1a;
+            color: #555;
 
             .icon {
                 width: 18px;
                 height: 18px;
-                stroke: currentColor;
             }
 
             &:hover {
-                background-color: #faf6f0;
-            }
-
-            &:active {
-                background-color: #e2d8c7;
+                background-color: #f8f8f8;
             }
 
             &.active {
-                background-color: #3a2a1a;
-                color: #fff;
-
-                .icon {
-                    stroke: #fff;
-                }
+                background-color: #eee;
+                border-color: #999;
+                color: #333;
             }
         }
     }
 
-
-
     // Park-Sektion
     .park-section {
-        margin-bottom: 2rem;
+        margin-bottom: 3rem;
 
         .park-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #777;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 10px;
 
-            svg {
-                width: 20px;
-                height: 20px;
-                stroke: #3a2a1a;
+            &::after {
+                content: '';
+                flex-grow: 1;
+                height: 1px;
+                background-color: #eee;
             }
         }
     }
@@ -78,81 +127,209 @@
     // Karten-Grid
     .coaster-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.8rem;
+        gap: 1.5rem;
+        width: 100%;
+        min-width: 0; // Prevent overflow from content
 
-        .coaster-card {
-            background-color: #faf6f0;
-            border: 1px solid #e2d8c7;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-
-            img {
-                height: 250px;
-                object-fit: cover;
-                width: 100%;
-                border-bottom: 1px solid #e2d8c7;
-            }
-
-            .card-body {
-                padding: 0.6rem;
-                text-align: center;
-
-                .card-title {
-                    font-size: 0.9rem;
-                    font-weight: 600;
-                    margin-bottom: 0.2rem;
-                }
-
-                .card-text {
-                    font-size: 0.75rem;
-                    color: #666;
-
-                    em {
-                        color: #7a6f66;
-                        font-style: italic;
+        &.cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        &.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        &.cols-4 {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            
+            @media (max-width: 768px) {
+                gap: 0.5rem;
+                .coaster-card {
+                    padding: 2px;
+                    .card-body {
+                        padding: 0.25rem 0.1rem;
+                        .card-title { 
+                            font-size: 0.7rem;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        }
+                        .card-text { font-size: 0.6rem; }
+                    }
+                    .stars {
+                        scale: 0.6;
+                        margin-top: -5px;
+                        margin-bottom: -5px;
+                    }
+                    .badge {
+                        font-size: 0.5rem;
+                        padding: 1px 3px;
                     }
                 }
             }
+        }
 
-            // Badge für "Gefahren"
-            .badge {
-                position: absolute;
-                top: 6px;
-                right: 6px;
-                font-size: 0.65rem;
-                font-weight: 600;
-                background-color: #2e8b57;
-                color: #fff;
-                border-radius: 6px;
-                padding: 0.2rem 0.4rem;
+        .coaster-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 5px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            min-width: 0; // Ensure card can shrink
+            width: 100%;
+
+            &:hover {
+                transform: scale(1.03);
+                z-index: 10;
+                
+                .info-overlay {
+                    opacity: 1;
+                }
             }
 
-            // Sterne-Bewertung
-            .stars {
+            .coaster-image-wrapper {
+                position: relative;
+                overflow: hidden;
+
+                img {
+                    width: 100%;
+                    aspect-ratio: 3 / 4;
+                    object-fit: cover;
+                    display: block;
+                }
+
+                .badge {
+                    position: absolute;
+                    bottom: 5px;
+                    right: 5px;
+                    font-size: 0.6rem;
+                    background-color: rgba(46, 139, 87, 0.9);
+                    color: #fff;
+                    padding: 2px 5px;
+                    border-radius: 3px;
+                }
+            }
+
+            .card-body {
+                padding: 0.5rem 0.2rem;
                 text-align: center;
-                margin: 0.4rem 0;
 
-                .star {
-                    width: 18px;
-                    height: 18px;
-                    vertical-align: middle;
-                    fill: #ccc !important;   // leere Sterne grau
-                    color: #ccc;             // Fallback für currentColor
+                .card-title {
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    margin: 0;
+                    color: #333;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
                 }
 
-                .star.filled {
-                    fill: #d4a017 !important; // gold
-                    color: #d4a017;           // Fallback für currentColor
+                .card-text {
+                    font-size: 0.7rem;
+                    color: #888;
+                    margin-top: 2px;
                 }
             }
 
+            .stars {
+                display: flex;
+                justify-content: center;
+                padding-bottom: 5px;
+                scale: 0.8;
+            }
 
+            .info-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(255,255,255,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                transition: opacity 0.2s;
+
+                .btn-info-circle {
+                    background: #3a2a1a;
+                    color: #fff;
+                    border-radius: 50%;
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+            }
+        }
+    }
+
+    // Pagination Album Style
+    .album-pagination {
+        .page-link {
+            border: none;
+            color: #3a2a1a;
+            margin: 0 5px;
+            border-radius: 50% !important;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+
+            &:hover {
+                background-color: #f0f0f0;
+            }
+        }
+
+        .page-item.active .page-link {
+            background-color: #3a2a1a;
+            color: #fff;
+        }
+        
+        .page-item.disabled .page-link {
+            background: transparent;
+            color: #ccc;
+        }
+    }
+}
+
+// Mobile Anpassungen
+@media (max-width: 768px) {
+    .collection-page {
+        padding: 1rem 0;
+        
+        &.album-theme .album-container {
+            padding: 10px;
+            max-width: 100%;
+            border-radius: 0;
+            
+            &::before { display: none; }
+            
+            .album-page-inner {
+                padding: 0.5rem;
+                border: none;
+            }
+        }
+
+        .coaster-grid {
+            gap: 0.5rem;
+            &.cols-1 {
+                grid-template-columns: repeat(1, minmax(0, 1fr));
+            }
+            &.cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            &.cols-4 {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .collection-page {
+        &.album-theme .album-container {
+            padding: 20px;
+        }
+        .coaster-grid {
+            gap: 1rem;
         }
     }
 }

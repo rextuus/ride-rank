@@ -5,57 +5,91 @@
 {% endblock %}
 
 {% block body %}
-    <div class="collection-page">
-        <h2 class="mb-3">Meine Sammlung</h2>
+    <div class="collection-page album-theme">
+        <div class="album-container">
+            <div class="album-page-inner">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="m-0">Meine Sammlung</h2>
 
-        {% set activeFilter = false %}
-        {% set activeSort = true %}
-
-        <div class="collection-header">
-            <button class="btn btn-filter {{ activeFilter ? 'active' }}">
-                {{ ux_icon('material-symbols:filter-alt-outline', {class: 'icon'}) }}
-                <span>Filter</span>
-            </button>
-            <button class="btn btn-sort {{ activeSort ? 'active' }}">
-                {{ ux_icon('material-symbols:sort', {class: 'icon'}) }}
-                <span>Sortieren</span>
-            </button>
-        </div>
-
-        {% for park, coasters in coastersByPark %}
-            <div class="park-section">
-                <div class="park-title">
-                    {{ ux_icon('tabler:rollercoaster', {style: 'height: 20px;'}) }}
-                    {{ park }}
-                </div>
-
-                <div class="coaster-grid">
-                    {% for coaster in coasters %}
-                        <div class="coaster-card position-relative">
-                            <img src="{{ coaster.image }}" alt="{{ coaster.name }}">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ coaster.name }}</h5>
-                                <p class="card-text">{{ coaster.park }}<br><em>{{ coaster.country }}</em></p>
-                            </div>
-                            {% if coaster.ridden %}
-                                <span class="badge">Gefahren</span>
-                            {% endif %}
-                            <div class="stars">
-                                {{ component('Rating', {'value': coaster.rating|round(0, 'floor')}) }}
-                            </div>
-
-                            <div class="mb-5">
-                            {# Info-Button oben rechts auf der Card #}
-                            <a href="{{ path('app_coaster_show', { id: loop.index }) }}"
-                               class="btn btn-sm btn-info-circle info-top-right" title="Details">
-                                {{ ux_icon('material-symbols:info-outline') }}
-                            </a>
-                            </div>
+                    <div class="view-controls">
+                        <span class="me-2 d-none d-sm-inline">Auflösung:</span>
+                        <div class="btn-group" role="group">
+                            <a href="{{ path('app_collection', {columns: 1, page: currentPage}) }}" class="btn btn-outline-primary btn-sm {{ columns == 1 ? 'active' }}">1</a>
+                            <a href="{{ path('app_collection', {columns: 2, page: currentPage}) }}" class="btn btn-outline-primary btn-sm {{ columns == 2 ? 'active' }}">2</a>
+                            <a href="{{ path('app_collection', {columns: 4, page: currentPage}) }}" class="btn btn-outline-primary btn-sm {{ columns == 4 ? 'active' }}">4</a>
                         </div>
-                    {% endfor %}
+                    </div>
                 </div>
-            </div>
-        {% endfor %}
-    </div>
 
+                {% set activeFilter = false %}
+                {% set activeSort = true %}
+
+                <div class="collection-header">
+                    <button class="btn btn-filter {{ activeFilter ? 'active' }}">
+                        {{ ux_icon('material-symbols:filter-alt-outline', {class: 'icon'}) }}
+                        <span>Filter</span>
+                    </button>
+                    <button class="btn btn-sort {{ activeSort ? 'active' }}">
+                        {{ ux_icon('material-symbols:sort', {class: 'icon'}) }}
+                        <span>Sortieren</span>
+                    </button>
+                </div>
+
+                {% for park, coasters in coastersByPark %}
+                    <div class="park-section">
+                        <div class="park-title">
+                            {{ ux_icon('tabler:rollercoaster', {style: 'height: 20px;'}) }}
+                            {{ park }}
+                        </div>
+
+                        <div class="coaster-grid cols-{{ columns }}">
+                            {% for coaster in coasters %}
+                                <div class="coaster-card position-relative">
+                                    <div class="coaster-image-wrapper">
+                                        <img src="{{ coaster.image }}" alt="{{ coaster.name }}">
+                                        {% if coaster.ridden %}
+                                            <span class="badge">Gefahren</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ coaster.name }}</h5>
+                                        <p class="card-text">{{ coaster.park }}<br><em>{{ coaster.country }}</em></p>
+                                    </div>
+                                    
+                                    <div class="stars">
+                                        {{ component('Rating', {'value': coaster.rating|round(0, 'floor')}) }}
+                                    </div>
+
+                                    <div class="info-overlay">
+                                        <a href="{{ path('app_coaster_show', { id: loop.index }) }}"
+                                           class="btn btn-sm btn-info-circle" title="Details">
+                                            {{ ux_icon('material-symbols:info-outline') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% if totalPages > 1 %}
+                    <nav class="mt-5">
+                        <ul class="pagination justify-content-center album-pagination">
+                            <li class="page-item {{ currentPage == 1 ? 'disabled' }}">
+                                <a class="page-link" href="{{ path('app_collection', {page: currentPage - 1, columns: columns}) }}">Zurück</a>
+                            </li>
+                            {% for i in 1..totalPages %}
+                                <li class="page-item {{ currentPage == i ? 'active' }}">
+                                    <a class="page-link" href="{{ path('app_collection', {page: i, columns: columns}) }}">{{ i }}</a>
+                                </li>
+                            {% endfor %}
+                            <li class="page-item {{ currentPage == totalPages ? 'disabled' }}">
+                                <a class="page-link" href="{{ path('app_collection', {page: currentPage + 1, columns: columns}) }}">Weiter</a>
+                            </li>
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 {% endblock %}
