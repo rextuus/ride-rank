@@ -12,6 +12,13 @@
         border-radius: 14px; // same as card, subtle rounding
         border: 1px solid #e3dcc7;
 
+        img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            display: block;
+        }
     }
 
     /* very subtle overlay for readability, keep it warm/light */

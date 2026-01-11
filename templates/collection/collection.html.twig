@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block body %}
+    </div> {# Close the default container opened in base.html.twig #}
     <div class="collection-page album-theme">
         <div class="album-container">
             <div class="album-page-inner">
@@ -46,25 +47,32 @@
                             {% for coaster in coasters %}
                                 <div class="coaster-card position-relative">
                                     <div class="coaster-image-wrapper">
-                                        <img src="{{ coaster.image }}" alt="{{ coaster.name }}">
+                                        <img src="{{ coaster.image }}" class="img-fluid" alt="{{ coaster.name }}">
+                                        
+                                        <div class="coaster-image-title">
+                                            <h5 class="card-title">{{ coaster.name }}</h5>
+                                        </div>
+
+                                        <div class="coaster-image-meta">
+                                            <span>{{ coaster.park }}</span>
+                                            <span class="mx-1">–</span>
+                                            <em>{{ coaster.country }}</em>
+                                        </div>
+
                                         {% if coaster.ridden %}
                                             <span class="badge">Gefahren</span>
                                         {% endif %}
-                                    </div>
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ coaster.name }}</h5>
-                                        <p class="card-text">{{ coaster.park }}<br><em>{{ coaster.country }}</em></p>
+
+                                        <div class="info-overlay">
+                                            <a href="{{ path('app_coaster_show', { id: loop.index }) }}"
+                                               class="btn btn-sm btn-info-circle" title="Details">
+                                                {{ ux_icon('material-symbols:info-outline') }}
+                                            </a>
+                                        </div>
                                     </div>
                                     
                                     <div class="stars">
                                         {{ component('Rating', {'value': coaster.rating|round(0, 'floor')}) }}
-                                    </div>
-
-                                    <div class="info-overlay">
-                                        <a href="{{ path('app_coaster_show', { id: loop.index }) }}"
-                                           class="btn btn-sm btn-info-circle" title="Details">
-                                            {{ ux_icon('material-symbols:info-outline') }}
-                                        </a>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -92,4 +100,5 @@
             </div>
         </div>
     </div>
+    <div class="container"> {# Re-open container to keep base.html.twig happy #}
 {% endblock %}

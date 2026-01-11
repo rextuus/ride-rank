@@ -27,7 +27,7 @@ final class CollectionController extends AbstractController
                 'name' => 'Blue Fire',
                 'park' => 'Europa Park',
                 'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/dl4y4cfvs/image/upload/v1757766314/CoasterMatch/Europa%20Park/Europa_Park_Blue_Fire_w9rn63.png',
+                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767990513/coasters/images/77.png',
                 'ridden' => true,
                 'rating' => 4
             ],
@@ -35,7 +35,7 @@ final class CollectionController extends AbstractController
                 'name' => 'Voltron Nevera',
                 'park' => 'Europa Park',
                 'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/dl4y4cfvs/image/upload/v1757766316/CoasterMatch/Europa%20Park/Europa_Park_Voltron_kasjwc.png',
+                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767993318/coasters/images/1.png',
                 'ridden' => false,
                 'rating' => 5
             ],
@@ -43,7 +43,7 @@ final class CollectionController extends AbstractController
                 'name' => 'Wodan Timburcoaster',
                 'park' => 'Europa Park',
                 'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/dl4y4cfvs/image/upload/v1757766316/CoasterMatch/Europa%20Park/Europa_Park_Wodan_c6utyt.png',
+                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767709473/coasters/cartoonized/204.png',
                 'ridden' => true,
                 'rating' => 3
             ],
@@ -51,7 +51,7 @@ final class CollectionController extends AbstractController
                 'name' => 'Taron',
                 'park' => 'Phantasialand',
                 'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/dl4y4cfvs/image/upload/v1757766318/CoasterMatch/Europa%20Park/Europa_Park_Super_Splash_eykgpf.png',
+                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767691616/coasters/cartoonized/202.png',
                 'ridden' => false,
                 'rating' => 5
             ],
@@ -59,7 +59,7 @@ final class CollectionController extends AbstractController
                 'name' => 'Black Mamba',
                 'park' => 'Phantasialand',
                 'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/dl4y4cfvs/image/upload/v1757766317/CoasterMatch/Europa%20Park/Europa_Park_Euro_Sat_zbbtsg.png',
+                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767691212/coasters/cartoonized/201.png',
                 'ridden' => true,
                 'rating' => 4
             ],
@@ -67,7 +67,7 @@ final class CollectionController extends AbstractController
                 'name' => 'Expedition GeForce',
                 'park' => 'Holiday Park',
                 'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/dl4y4cfvs/image/upload/v1757766314/CoasterMatch/Europa%20Park/Europa_Park_Matterhorn_Blitz_imsx5o.png',
+                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767692925/coasters/cartoonized/203.png',
                 'ridden' => false,
                 'rating' => 5
             ],

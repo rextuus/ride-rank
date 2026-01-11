@@ -1,15 +1,20 @@
+@import 'variables';
+
 .collection-page {
     padding-bottom: 80px;
-    background-color: #f0f0f0; // Etwas dunklerer Hintergrund für das Album
     min-height: 100vh;
     padding-top: 2rem;
+
+    background-image: url('https://res.cloudinary.com/duzqnf8fu/image/upload/v1767737818/background_l5liq5.png');
+    background-size: cover;
+    background-position: center;
+    border-radius: 14px;
 
     &.album-theme {
         .album-container {
             max-width: 1400px;
             margin: 0 auto;
-            background-color: #fff;
-            padding: 20px 40px;
+            padding: 10px 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             border-radius: 4px;
             position: relative;
@@ -32,7 +37,7 @@
 
             .album-page-inner {
                 border: 1px solid #eee;
-                padding: 1.5rem;
+                padding: 1rem;
                 min-height: 800px;
                 display: flex;
                 flex-direction: column;
@@ -130,25 +135,44 @@
         gap: 1.5rem;
         width: 100%;
         min-width: 0; // Prevent overflow from content
+        
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
 
-        &.cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-        &.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        &.cols-1 { 
+            grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+            .coaster-card {
+                max-width: 400px;
+                margin: 0 auto;
+            }
+        }
+        &.cols-2 { 
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            @media (min-width: 1200px) {
+                max-width: 900px;
+            }
+        }
         &.cols-4 {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
             
             @media (max-width: 768px) {
                 gap: 0.5rem;
                 .coaster-card {
-                    padding: 2px;
-                    .card-body {
-                        padding: 0.25rem 0.1rem;
-                        .card-title { 
-                            font-size: 0.7rem;
-                            white-space: nowrap;
-                            overflow: hidden;
-                            text-overflow: ellipsis;
+                    padding: 4px;
+                    .coaster-image-wrapper {
+                        .coaster-image-title {
+                            top: 0.2rem;
+                            left: 0.2rem;
+                            h2, .card-title {
+                                font-size: 0.6rem;
+                            }
                         }
-                        .card-text { font-size: 0.6rem; }
+                        .coaster-image-meta {
+                            left: 0.2rem;
+                            bottom: 0.1rem;
+                            font-size: 0.5rem;
+                        }
                     }
                     .stars {
                         scale: 0.6;
@@ -164,9 +188,12 @@
         }
 
         .coaster-card {
-            background-color: #fff;
+            background-image: $background-url-1;
+            background-size: cover;
+            background-position: center;
             border: 1px solid #ddd;
-            padding: 5px;
+            padding: 0.5rem;
+            border-radius: 14px;
             box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
             transition: transform 0.2s;
             min-width: 0; // Ensure card can shrink
@@ -184,77 +211,118 @@
             .coaster-image-wrapper {
                 position: relative;
                 overflow: hidden;
+                border-radius: 10px;
+                border: 1px solid #e3dcc7;
 
                 img {
-                    width: 100%;
-                    aspect-ratio: 3 / 4;
-                    object-fit: cover;
-                    display: block;
+                    width: 100% !important;
+                    height: auto !important;
+                    aspect-ratio: 3 / 4 !important;
+                    object-fit: cover !important;
+                    display: block !important;
                 }
 
                 .badge {
                     position: absolute;
-                    bottom: 5px;
+                    top: 5px;
                     right: 5px;
                     font-size: 0.6rem;
                     background-color: rgba(46, 139, 87, 0.9);
                     color: #fff;
                     padding: 2px 5px;
                     border-radius: 3px;
+                    z-index: 3;
+                }
+
+                .coaster-image-title {
+                    position: absolute;
+                    top: 0.5rem;
+                    left: 0.5rem;
+                    z-index: 2;
+                    color: #3a2a1a;
+                    width: calc(100% - 1rem);
+
+                    h2, .card-title {
+                        font-size: 0.85rem;
+                        font-weight: 600;
+                        margin: 0;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        font-family: 'Serif', Georgia, serif;
+                    }
+                }
+
+                .coaster-image-meta {
+                    position: absolute;
+                    left: 0.5rem;
+                    bottom: 0.1rem;
+                    z-index: 2;
+                    font-size: 0.65rem;
+                    color: #3a2a1a;
+                    width: calc(100% - 1rem);
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+
+                    em {
+                        font-style: italic;
+                        opacity: 0.9;
+                    }
+                }
+
+                .info-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(255,255,255,0.4);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    opacity: 0;
+                    transition: opacity 0.2s;
+                    z-index: 4;
+
+                    .btn-info-circle {
+                        background: #3a2a1a;
+                        color: #fff;
+                        border-radius: 50%;
+                        width: 32px;
+                        height: 32px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border: none;
+                    }
+                }
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(
+                                    to bottom,
+                                    rgba(250, 246, 240, 0.4) 0%,
+                                    rgba(250, 246, 240, 0) 50%,
+                                    rgba(250, 246, 240, 0.4) 100%
+                    );
+                    pointer-events: none;
+                    z-index: 1;
                 }
             }
 
             .card-body {
-                padding: 0.5rem 0.2rem;
-                text-align: center;
-
-                .card-title {
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    margin: 0;
-                    color: #333;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-
-                .card-text {
-                    font-size: 0.7rem;
-                    color: #888;
-                    margin-top: 2px;
-                }
+                display: none; // We move content into image wrapper or below differently
             }
 
             .stars {
                 display: flex;
                 justify-content: center;
-                padding-bottom: 5px;
+                padding-top: 8px;
+                padding-bottom: 2px;
                 scale: 0.8;
-            }
-
-            .info-overlay {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(255,255,255,0.8);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                opacity: 0;
-                transition: opacity 0.2s;
-
-                .btn-info-circle {
-                    background: #3a2a1a;
-                    color: #fff;
-                    border-radius: 50%;
-                    width: 32px;
-                    height: 32px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
             }
         }
     }
@@ -311,13 +379,16 @@
         .coaster-grid {
             gap: 0.5rem;
             &.cols-1 {
-                grid-template-columns: repeat(1, minmax(0, 1fr));
+                grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+                .coaster-card {
+                    max-width: 100%;
+                }
             }
             &.cols-2 {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             }
             &.cols-4 {
-                grid-template-columns: repeat(4, minmax(0, 1fr));
+                grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
             }
         }
     }
