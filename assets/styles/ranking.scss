@@ -6,7 +6,8 @@
     border-radius: 14px;
 
     background-image: $background-url-1;
-    background-size: cover;
+    background-size: 100% auto;
+    background-repeat: no-repeat;
     background-position: center;
 }
 
@@ -57,6 +58,7 @@
 
 .ranking-info {
     font-size: 0.9rem;
+    font-family: 'Serif', Georgia, serif;
 
     .stars {
         gap: 1px;

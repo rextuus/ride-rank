@@ -6,8 +6,10 @@
     padding-top: 2rem;
 
     background-image: url('https://res.cloudinary.com/duzqnf8fu/image/upload/v1767737818/background_l5liq5.png');
-    background-size: cover;
-    background-position: center;
+    background-size: 500px auto;
+    background-repeat: repeat;
+    background-position: top left;
+    background-attachment: fixed;
     border-radius: 14px;
 
     &.album-theme {
@@ -47,7 +49,7 @@
     }
 
     h2 {
-        font-family: 'Serif', Georgia, serif; // Album-Stil
+        font-family: 'Serif', Georgia, serif !important; // Album-Stil
         font-size: 1.8rem;
         font-weight: 700;
         color: #333;
@@ -226,7 +228,8 @@
 
         .coaster-card {
             background-image: $background-url-1;
-            background-size: cover;
+            background-size: 100% auto; // Stretch to width, height auto
+            background-repeat: no-repeat;
             background-position: center;
             border: 1px solid #ddd;
             padding: 0.5rem;
@@ -259,7 +262,7 @@
                 top: -5px;
                 right: -5px;
                 z-index: 10;
-                background-color: #44ad44;
+                background-color: $ridden-background-color-collection;
                 color: #fff;
                 font-size: 0.7rem;
                 padding: 0.2rem 0.6rem;
@@ -267,6 +270,11 @@
                 font-weight: 600;
                 border: 1px solid rgba(0,0,0,0.1);
                 box-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+
+                @media (min-width: 768px) {
+                    font-size: 0.3rem;
+
+                }
             }
 
             .coaster-image-wrapper {
@@ -298,7 +306,7 @@
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
-                        font-family: 'Serif', Georgia, serif;
+                        font-family: 'Serif', Georgia, serif !important;
                     }
                 }
 

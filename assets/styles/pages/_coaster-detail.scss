@@ -1,7 +1,8 @@
 .coaster-detail-card {
 
     background-image: $background-url-1;
-    background-size: cover;
+    background-size: 100% auto;
+    background-repeat: no-repeat;
     background-position: center;
     padding: 1rem;
     border-radius: 14px; // same as card, subtle rounding
@@ -68,6 +69,7 @@
         z-index: 2;
         color: #3a2a1a;  // use your dark brown instead of black
         h2 {
+            font-family: 'Serif', Georgia, serif;
             font-size: 1.5rem;
             font-weight: 600;
             margin: 0;
@@ -81,6 +83,7 @@
         left: 0.8rem;
         bottom: 0.1rem;
         z-index: 2;
+        font-family: 'Serif', Georgia, serif;
         font-size: 0.9rem;
         color: #3a2a1a; // same dark brown
         em {
