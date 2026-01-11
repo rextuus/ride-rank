@@ -1,67 +1,74 @@
+
 {% macro stats(track) %}
     {% if track %}
+        {% set cloudinary_base = 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767953814/' %}
+        {% set cloudinary_model = 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1768168473/model-2-blank_tr1prd.png' %}
+        {% set cloudinary_star = 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767964276/star-blank_ashiq6.png' %}
         <dl class="small text-start mb-0 coaster-stats">
             {% set items = [
                 {
                     label: 'Hersteller',
-                    icon: 'manufacterer-blank_ppjkkv.png',
+                    icon: cloudinary_base ~ 'manufacterer-blank_ppjkkv.png',
                     value: track.manufacturer.value ?? null,
                     favorite: false
                 },
                 {
+                    label: 'Modell',
+                    icon: cloudinary_model,
+                    value: track.model.value ?? null,
+                    favorite: false
+                },
+                {
                     label: 'Länge',
-                    icon: 'track_length_blank_jexe2a.png',
+                    icon: cloudinary_base ~ 'track_length_blank_jexe2a.png',
                     value: track.length.value is not null ? track.length.value|round(2) ~ ' m' : null,
                     favorite: track.length.favorite
                 },
                 {
                     label: 'Höhe',
-                    icon: 'height-blank_fit8oy.png',
+                    icon: cloudinary_base ~ 'height-blank_fit8oy.png',
                     value: track.height.value is not null ? track.height.value|round ~ ' m' : null,
                     favorite: track.height.favorite
                 },
                 {
                     label: 'Geschwindigkeit',
-                    icon: 'speed-blank_o1shxp.png',
+                    icon: cloudinary_base ~ 'speed-blank_o1shxp.png',
                     value: track.speed.value is not null ? track.speed.value|round ~ ' km/h' : null,
                     favorite: track.speed.favorite
                 },
                 {
                     label: 'Inversionen',
-                    icon: 'inversions-blank_hj0fmp.png',
+                    icon: cloudinary_base ~ 'inversions-blank_hj0fmp.png',
                     value: track.inversions.value ?? null,
                     favorite: track.inversions.favorite
                 },
                 {
                     label: 'Dauer',
-                    icon: 'hourglass-blank_ljraqj.png',
+                    icon: cloudinary_base ~ 'hourglass-blank_ljraqj.png',
                     value: track.duration.value is not null ? track.duration.value ~ ' s' : null,
                     favorite: track.duration.favorite
                 },
                 {
                     label: 'Drop',
-                    icon: 'drop-blank_cpjhie.png',
+                    icon: cloudinary_base ~ 'drop-blank_cpjhie.png',
                     value: track.drop.value is not null ? track.drop.value|round ~ '°' : null,
                     favorite: track.drop.favorite
                 }
             ] %}
-
             {% for item in items %}
                 <div class="spec-item">
                     <div class="spec-icon">
-                        <img src="https://res.cloudinary.com/duzqnf8fu/image/upload/v1767953814/{{ item.icon }}"
+                        <img src="{{ item.icon }}"
                              alt="{{ item.label }}">
                     </div>
-
                     <div class="spec-content">
                         <div class="fav-star-icon">
                             <small class="spec-label">{{ item.label }}</small>
                             {% if item.favorite %}
-                                <img src="https://res.cloudinary.com/duzqnf8fu/image/upload/v1767964276/star-blank_ashiq6.png"
+                                <img src="{{ cloudinary_star }}"
                                      alt="Favorit">
                             {% endif %}
                         </div>
-
                         <div class="spec-value">
                             {{ item.value ?? '-' }}
                         </div>

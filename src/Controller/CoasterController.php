@@ -21,7 +21,7 @@ final class CoasterController extends AbstractController
     #[Route('/coaster/{id}', name: 'app_coaster_show')]
     public function show(int $id, CoasterRepository $coasterRepository): Response
     {
-        $coaster = $coasterRepository->find(1);
+        $coaster = $coasterRepository->find(2);
 
         $trackEntity = $coaster->getTrack();
         $track = [
@@ -49,6 +49,7 @@ final class CoasterController extends AbstractController
             ],
             'verticalAngle' => ['value' => $trackEntity->getVerticalAngle(), 'favorite' => false, 'unit' => '°'],
             'manufacturer' => ['value' => $coaster->getManufacturer()->getName(), 'favorite' => false],
+            'model' => ['value' => $coaster->getModels()->first() ? $coaster->getModels()->first()->getName() : null, 'favorite' => false],
         ];
 
         $coaster = [
