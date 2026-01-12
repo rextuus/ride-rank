@@ -6,7 +6,7 @@
 
 {% block body %}
     </div> {# Close the default container opened in base.html.twig #}
-    <div class="collection-page album-theme">
+    <div class="collection-page album-theme mb-3">
         <div class="album-container">
             <div class="album-page-inner">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -46,9 +46,6 @@
                         <div class="coaster-grid cols-{{ columns }}">
                             {% for coaster in coasters %}
                                 <div class="coaster-card position-relative {{ not coaster.ridden ? 'not-ridden' }}">
-                                    {% if coaster.ridden %}
-                                        <span class="badge ridden-badge">Gefahren</span>
-                                    {% endif %}
                                     <div class="coaster-image-wrapper">
                                         <img src="{{ coaster.image }}" class="img-fluid" alt="{{ coaster.name }}">
 

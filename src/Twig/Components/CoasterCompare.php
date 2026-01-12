@@ -228,7 +228,6 @@ class CoasterCompare
         $track = null;
         if ($coaster->getTrack()) {
             $trackEntity = $coaster->getTrack();
-
             $track = [
                 'length' => [
                     'value' => $this->convertLength($trackEntity->getLength()),
@@ -254,6 +253,7 @@ class CoasterCompare
                 ],
                 'verticalAngle' => ['value' => $trackEntity->getVerticalAngle(), 'favorite' => false, 'unit' => '°'],
                 'manufacturer' => ['value' => $coaster->getManufacturer()->getName(), 'favorite' => false],
+                'model' => ['value' => $coaster->getModels()->first() ? $coaster->getModels()->first()->getName() : null, 'favorite' => false],
             ];
         }
 

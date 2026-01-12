@@ -1,8 +1,7 @@
 .coaster-detail-card {
 
     background-image: $background-url-1;
-    background-size: 100% auto;
-    background-repeat: no-repeat;
+    background-size: cover;
     background-position: center;
     padding: 1rem;
     border-radius: 14px; // same as card, subtle rounding
