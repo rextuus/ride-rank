@@ -87,11 +87,13 @@ class RankingController extends AbstractController
         $ranking = [];
 
         foreach ($coasters as $index => $eloCoasterDto) {
-            $ranking[$index] = $this->coasterNormalizer->normalize($eloCoasterDto->coaster);
+            $ranking[$index] = $this->coasterNormalizer->normalize($eloCoasterDto->coaster, $user);
             $ranking[$index]['losses'] = $eloCoasterDto->losses;
             $ranking[$index]['wins'] = $eloCoasterDto->wins;
             $ranking[$index]['personalLosses'] = $eloCoasterDto->personalLosses;
             $ranking[$index]['personalWins'] = $eloCoasterDto->personalWins;
+            $ranking[$index]['eloRating'] = $eloCoasterDto->coaster->getRating();
+            $ranking[$index]['personalRating'] = $eloCoasterDto->personalRating;
         }
 
         return $this->render('ranking/ranking.html.twig', [

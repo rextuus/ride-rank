@@ -6,6 +6,7 @@ use App\Common\Entity\Enum\LocationType;
 use App\Entity\Coaster;
 use App\Entity\Location;
 use App\Entity\User;
+use App\Entity\UserCoasterRating;
 use App\Service\Ranking\EloCoasterDto;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -120,59 +121,75 @@ class CoasterRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('c');
 
-        // Join UserCoasterRating if user is provided
         if ($user !== null) {
-            $qb->leftJoin(
-                'App\Entity\UserCoasterRating',
-                'ucr',
-                'WITH',
-                'ucr.coaster = c AND ucr.user = :user'
-            )->setParameter('user', $user);
+            $qb->select('c', 'ucr')
+                ->leftJoin(
+                    UserCoasterRating::class,
+                    'ucr',
+                    'WITH',
+                    'ucr.coaster = c AND ucr.user = :user'
+                )
+                ->setParameter('user', $user);
+        } else {
+            $qb->select('c');
         }
 
         $qb->orderBy('c.rating', 'DESC')
             ->setMaxResults($limit);
 
-        $coasters = $qb->getQuery()->getResult();
+        $results = $qb->getQuery()->getResult();
 
         $result = [];
-        foreach ($coasters as $coaster) {
+        foreach ($results as $row) {
+            $userRating = null;
+            if (is_array($row)) {
+                $coaster = $row[0] ?? null;
+                $userRating = $row['ucr'] ?? null;
+            } else {
+                $coaster = $row;
+            }
+
+            if (!$coaster instanceof Coaster) {
+                continue;
+            }
+
+            // If we have a user but no rating was joined, try to fetch it specifically
+            // This handles cases where Doctrine doesn't return the join as part of the array
+            if ($user !== null && $userRating === null) {
+                $userRating = $this->getEntityManager()
+                    ->getRepository(UserCoasterRating::class)
+                    ->findOneBy(['user' => $user, 'coaster' => $coaster]);
+            }
+
             $wins = 0;
             $losses = 0;
             $personalWins = 0;
             $personalLosses = 0;
+            $personalRating = null;
 
-            if ($user !== null) {
-                // Get global stats from comparisons
-                $comparisons = $this->getEntityManager()
-                    ->createQueryBuilder()
-                    ->from('App\Entity\PairwiseComparison', 'pc')
-                    ->select('COUNT(pc.id) as count')
-                    ->where('pc.winner = :coaster')
-                    ->setParameter('coaster', $coaster)
-                    ->getQuery()
-                    ->getSingleScalarResult();
-                $wins = (int)$comparisons;
+            // Get global stats from comparisons (could be optimized, but following current structure)
+            $wins = (int) $this->getEntityManager()
+                ->createQueryBuilder()
+                ->from('App\Entity\PairwiseComparison', 'pc')
+                ->select('COUNT(pc.id)')
+                ->where('pc.winner = :coaster')
+                ->setParameter('coaster', $coaster)
+                ->getQuery()
+                ->getSingleScalarResult();
 
-                $comparisons = $this->getEntityManager()
-                    ->createQueryBuilder()
-                    ->from('App\Entity\PairwiseComparison', 'pc')
-                    ->select('COUNT(pc.id) as count')
-                    ->where('pc.loser = :coaster')
-                    ->setParameter('coaster', $coaster)
-                    ->getQuery()
-                    ->getSingleScalarResult();
-                $losses = (int)$comparisons;
+            $losses = (int) $this->getEntityManager()
+                ->createQueryBuilder()
+                ->from('App\Entity\PairwiseComparison', 'pc')
+                ->select('COUNT(pc.id)')
+                ->where('pc.loser = :coaster')
+                ->setParameter('coaster', $coaster)
+                ->getQuery()
+                ->getSingleScalarResult();
 
-                // Get personal stats from UserCoasterRating
-                $userRating = $this->getEntityManager()
-                    ->getRepository('App\Entity\UserCoasterRating')
-                    ->findOneBy(['user' => $user, 'coaster' => $coaster]);
-
-                if ($userRating !== null) {
-                    $personalWins = $userRating->getWins();
-                    $personalLosses = $userRating->getLosses();
-                }
+            if ($userRating !== null) {
+                $personalWins = $userRating->getWins();
+                $personalLosses = $userRating->getLosses();
+                $personalRating = $userRating->getRating();
             }
 
             $result[] = new EloCoasterDto(
@@ -181,6 +198,7 @@ class CoasterRepository extends ServiceEntityRepository
                 losses: $losses,
                 personalWins: $personalWins,
                 personalLosses: $personalLosses,
+                personalRating: $personalRating,
             );
         }
 

@@ -44,21 +44,28 @@
     .position-3 { background: #cd7f32; color: #fff; }
     .position-4,
     .position-5 { background: #7a6f66; }
-
-    .ridden-badge {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        font-size: 0.7rem;
-        padding: 0.2rem 0.4rem;
-        background-color: $ridden-background-color;
-    }
 }
 
+.ridden-badge {
+    background-color: $ridden-background-color;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+}
 
 .ranking-info {
     font-size: 0.9rem;
     font-family: 'Serif', Georgia, serif;
+    min-width: 0; // Allows flex child to shrink and wrap text
+
+    .coaster-name {
+        word-spacing: 100vw;
+    }
+
+    @media (min-width: 576px) {
+        .coaster-name {
+            word-spacing: normal;
+        }
+    }
 
     .stars {
         gap: 1px;
@@ -68,8 +75,14 @@
             height: 16px;
         }
 
-        small {
-            font-size: 0.7rem;
+        .elo-score {
+            font-size: 0.8rem;
+        }
+
+        @media (min-width: 576px) {
+            .elo-score {
+                margin-left: 0.25rem;
+            }
         }
     }
 

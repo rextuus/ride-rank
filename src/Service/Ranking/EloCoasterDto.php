@@ -14,6 +14,7 @@ class EloCoasterDto
         public int $losses,
         public int $personalWins,
         public int $personalLosses,
+        public ?float $personalRating = null,
     )
     {
     }
