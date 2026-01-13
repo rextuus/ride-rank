@@ -5,7 +5,8 @@ namespace App\Repository;
 use App\Common\Entity\Enum\LocationType;
 use App\Entity\Coaster;
 use App\Entity\Location;
-use App\Entity\UserCoasterAffinity;
+use App\Entity\User;
+use App\Service\Ranking\EloCoasterDto;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -102,4 +103,124 @@ class CoasterRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    public function getMaxElo(): float
+    {
+        return (float) $this->createQueryBuilder('c')
+            ->select('MAX(c.rating)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+
+    /**
+     * @return array<EloCoasterDto>
+     */
+    public function getCoasterWithHighestElo(?User $user = null, int $limit = 20): array
+    {
+        $qb = $this->createQueryBuilder('c');
+
+        // Join UserCoasterRating if user is provided
+        if ($user !== null) {
+            $qb->leftJoin(
+                'App\Entity\UserCoasterRating',
+                'ucr',
+                'WITH',
+                'ucr.coaster = c AND ucr.user = :user'
+            )->setParameter('user', $user);
+        }
+
+        $qb->orderBy('c.rating', 'DESC')
+            ->setMaxResults($limit);
+
+        $coasters = $qb->getQuery()->getResult();
+
+        $result = [];
+        foreach ($coasters as $coaster) {
+            $wins = 0;
+            $losses = 0;
+            $personalWins = 0;
+            $personalLosses = 0;
+
+            if ($user !== null) {
+                // Get global stats from comparisons
+                $comparisons = $this->getEntityManager()
+                    ->createQueryBuilder()
+                    ->from('App\Entity\PairwiseComparison', 'pc')
+                    ->select('COUNT(pc.id) as count')
+                    ->where('pc.winner = :coaster')
+                    ->setParameter('coaster', $coaster)
+                    ->getQuery()
+                    ->getSingleScalarResult();
+                $wins = (int)$comparisons;
+
+                $comparisons = $this->getEntityManager()
+                    ->createQueryBuilder()
+                    ->from('App\Entity\PairwiseComparison', 'pc')
+                    ->select('COUNT(pc.id) as count')
+                    ->where('pc.loser = :coaster')
+                    ->setParameter('coaster', $coaster)
+                    ->getQuery()
+                    ->getSingleScalarResult();
+                $losses = (int)$comparisons;
+
+                // Get personal stats from UserCoasterRating
+                $userRating = $this->getEntityManager()
+                    ->getRepository('App\Entity\UserCoasterRating')
+                    ->findOneBy(['user' => $user, 'coaster' => $coaster]);
+
+                if ($userRating !== null) {
+                    $personalWins = $userRating->getWins();
+                    $personalLosses = $userRating->getLosses();
+                }
+            }
+
+            $result[] = new EloCoasterDto(
+                coaster: $coaster,
+                wins: $wins,
+                losses: $losses,
+                personalWins: $personalWins,
+                personalLosses: $personalLosses,
+            );
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<int, int> coasterId => rank
+     */
+    public function getGlobalRanks(): array
+    {
+        $rows = $this->createQueryBuilder('c')
+            ->select('c.id, c.rating')
+            ->orderBy('c.rating', 'DESC')
+            ->getQuery()
+            ->getArrayResult();
+
+        $rank = 1;
+        $ranks = [];
+
+        foreach ($rows as $row) {
+            $ranks[$row['id']] = $rank++;
+        }
+
+        return $ranks;
+    }
+
+    /**
+     * @return array<Coaster>
+     */
+    public function findByParks(array $parkNames): array
+    {
+        return $this->createQueryBuilder('c')
+            ->leftJoin('c.locations', 'l')
+            ->where('l.type = :type')
+            ->andWhere('l.ident IN (:parks)')
+            ->setParameter('type', LocationType::AMUSEMENT_PARK->value)
+            ->setParameter('parks', $parkNames)
+            ->getQuery()
+            ->getResult();
+    }
+
 }

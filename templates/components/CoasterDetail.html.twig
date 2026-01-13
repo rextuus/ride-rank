@@ -1,0 +1,40 @@
+{% set coaster = coasterData %}
+<div {{ attributes }}>
+    <div class="coaster-detail-card mb-4">
+        <div class="position-relative coaster-image-wrapper">
+            <img src="{{ coaster.image }}" class="img-fluid rounded" alt="{{ coaster.name }}">
+            <div class="coaster-image-title">
+                <h2 class="mb-0">{{ coaster.name }}</h2>
+            </div>
+            <div class="coaster-image-meta">
+                <span>{{ coaster.park }}</span>
+                <span class="mx-1">–</span>
+                <em>{{ coaster.country }}</em>
+            </div>
+            {% if coaster.isSeen %}
+                <span class="badge common-ridden-badge position-absolute top-0 end-0 m-2">
+                    Gefahren
+                </span>
+            {% endif %}
+        </div>
+
+        <div class="mt-4">
+            <h5 class="mb-3">Technische Daten</h5>
+            <div class="coaster-stats-wrapper">
+                {% import 'macros/_coaster_stats.html.twig' as coasterStats %}
+                {{ coasterStats.stats(coaster.track) }}
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <button class="btn ridden-btn {{ coaster.isSeen ? 'btn-success' : 'btn-outline-primary' }} w-100"
+                data-action="live#action"
+                data-live-action-param="toggleSeen"
+                data-live-id-param="{{ coaster.id }}"
+                {% if not app.user %}disabled title="Login zum Markieren"{% endif %}>
+            {{ ux_icon(coaster.isSeen ? 'lucide:check-circle' : 'lucide:circle', {style: 'height: 1.2em; width: 1.2em;'}) }}
+            {{ coaster.isSeen ? 'Gefahren' : 'Nicht gefahren' }}
+        </button>
+    </div>
+</div>

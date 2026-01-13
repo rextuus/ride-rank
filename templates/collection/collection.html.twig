@@ -15,9 +15,9 @@
                     <div class="view-controls">
                         <span class="me-2 d-none d-sm-inline">Auflösung:</span>
                         <div class="btn-group" role="group">
-                            <a href="{{ path('app_collection', {columns: 1, page: currentPage}) }}" class="btn btn-outline-primary btn-sm {{ columns == 1 ? 'active' }}">1</a>
-                            <a href="{{ path('app_collection', {columns: 2, page: currentPage}) }}" class="btn btn-outline-primary btn-sm {{ columns == 2 ? 'active' }}">2</a>
-                            <a href="{{ path('app_collection', {columns: 4, page: currentPage}) }}" class="btn btn-outline-primary btn-sm {{ columns == 4 ? 'active' }}">4</a>
+                            <a href="{{ path('app_collection', {columns: 1}) }}" class="btn btn-outline-primary btn-sm {{ columns == 1 ? 'active' }}">1</a>
+                            <a href="{{ path('app_collection', {columns: 2}) }}" class="btn btn-outline-primary btn-sm {{ columns == 2 ? 'active' }}">2</a>
+                            <a href="{{ path('app_collection', {columns: 4}) }}" class="btn btn-outline-primary btn-sm {{ columns == 4 ? 'active' }}">4</a>
                         </div>
                     </div>
                 </div>
@@ -60,39 +60,54 @@
                                         </div>
 
                                         <div class="info-overlay">
-                                            <a href="{{ path('app_coaster_show', { id: loop.index }) }}"
+                                            <a href="{{ path('app_coaster_show', { coaster: coaster.id }) }}"
                                                class="btn btn-sm btn-info-circle" title="Details">
                                                 {{ ux_icon('material-symbols:info-outline') }}
                                             </a>
                                         </div>
                                     </div>
-                                    
+
+                                    {#
                                     <div class="stars">
                                         {{ component('Rating', {'value': coaster.rating|round(0, 'floor')}) }}
                                     </div>
+                                    #}
+
+                                    <div class="elo-wrapper">
+                                        <div class="elo-label">
+                                            <span class="elo-rank">#{{ coaster.rank }}</span>
+                                        </div>
+                                        <div class="elo-bar">
+                                            <div
+                                                    class="elo-bar-fill"
+                                                    style="width: {{ coaster.eloPercent }}%;"
+                                            ></div>
+                                        </div>
+                                    </div>
+
                                 </div>
                             {% endfor %}
                         </div>
                     </div>
                 {% endfor %}
 
-                {% if totalPages > 1 %}
-                    <nav class="mt-5">
-                        <ul class="pagination justify-content-center album-pagination">
-                            <li class="page-item {{ currentPage == 1 ? 'disabled' }}">
-                                <a class="page-link" href="{{ path('app_collection', {page: currentPage - 1, columns: columns}) }}">Zurück</a>
-                            </li>
-                            {% for i in 1..totalPages %}
-                                <li class="page-item {{ currentPage == i ? 'active' }}">
-                                    <a class="page-link" href="{{ path('app_collection', {page: i, columns: columns}) }}">{{ i }}</a>
-                                </li>
-                            {% endfor %}
-                            <li class="page-item {{ currentPage == totalPages ? 'disabled' }}">
-                                <a class="page-link" href="{{ path('app_collection', {page: currentPage + 1, columns: columns}) }}">Weiter</a>
-                            </li>
-                        </ul>
-                    </nav>
-                {% endif %}
+{#                {% if totalPages > 1 %}#}
+{#                    <nav class="mt-5">#}
+{#                        <ul class="pagination justify-content-center album-pagination">#}
+{#                            <li class="page-item {{ currentPage == 1 ? 'disabled' }}">#}
+{#                                <a class="page-link" href="{{ path('app_collection', {page: currentPage - 1, columns: columns}) }}">Zurück</a>#}
+{#                            </li>#}
+{#                            {% for i in 1..totalPages %}#}
+{#                                <li class="page-item {{ currentPage == i ? 'active' }}">#}
+{#                                    <a class="page-link" href="{{ path('app_collection', {page: i, columns: columns}) }}">{{ i }}</a>#}
+{#                                </li>#}
+{#                            {% endfor %}#}
+{#                            <li class="page-item {{ currentPage == totalPages ? 'disabled' }}">#}
+{#                                <a class="page-link" href="{{ path('app_collection', {page: currentPage + 1, columns: columns}) }}">Weiter</a>#}
+{#                            </li>#}
+{#                        </ul>#}
+{#                    </nav>#}
+{#                {% endif %}#}
             </div>
         </div>
     </div>

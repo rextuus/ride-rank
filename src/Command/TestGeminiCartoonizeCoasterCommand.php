@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Repository\CoasterRepository;
-use App\Service\CoasterImageTransformer;
+use App\Service\ImageTransformation\CoasterImageTransformer;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -54,7 +54,10 @@ final class TestGeminiCartoonizeCoasterCommand extends Command
 
         $io->text('Transforming image…');
         $t2 = microtime(true);
-        $cloudinaryUrl = $this->coasterImageTransformer->transform($coaster);
+
+        $rcdbImageUrl = $coaster->getRcdbImageUrl();
+
+        $cloudinaryUrl = $this->coasterImageTransformer->transform($coaster, $rcdbImageUrl);
         $t3 = microtime(true);
         $io->text(sprintf("Transformation finished in %.2f seconds", $t3 - $t2));
 

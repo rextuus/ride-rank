@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Service\ImageTransformation;
 
 use App\Entity\Coaster;
 use App\Service\Cloudinary\CloudinaryApiGateway;
@@ -22,13 +22,8 @@ readonly class CoasterImageTransformer
     ) {
     }
 
-    public function transform(Coaster $coaster): string
+    public function transform(Coaster $coaster, string $rcdbImageUrl): string
     {
-        $rcdbImageUrl = $coaster->getRcdbImageUrl();
-        if (!$rcdbImageUrl) {
-            throw new RuntimeException('Coaster has no rcdbImageUrl.');
-        }
-
         $prompt = <<<TEXT
     TASK: Artistic Watercolor (Wasserfarben) Transformation.
     
@@ -86,8 +81,8 @@ readonly class CoasterImageTransformer
             $slug = uniqid();
 
             $uploadResult = $this->cloudinaryApiGateway->uploadImage($tempPath, [
-                'folder' => 'coasters/images',
-                'public_id' => (string) $coaster->getId(),
+                'folder' => 'coasters/images/' . $coaster->getId(),
+                'public_id' => $slug,
                 'overwrite' => true,
             ]);
 

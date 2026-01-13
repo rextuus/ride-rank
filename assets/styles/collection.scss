@@ -240,7 +240,7 @@
             &.not-ridden {
                 .coaster-image-wrapper {
                     img {
-                        filter: blur(1px) grayscale(20%);
+                        filter: blur(1px) grayscale(80%);
                         opacity: 0.7;
                     }
                 }
@@ -458,4 +458,80 @@
             gap: 1rem;
         }
     }
+}
+
+.elo-wrapper {
+    margin-top: 6px;
+    padding: 6px 8px;
+    font-family: 'Serif', Georgia, serif;
+}
+
+.elo-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: #3a2a1a;
+    margin-bottom: 3px;
+    opacity: 0.9;
+
+    .elo-rank {
+        font-style: italic;
+        opacity: 0.7;
+    }
+}
+
+.elo-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    background-image:
+            linear-gradient(to bottom, rgba(58,42,26,0.45) 0 60%, transparent 60%),
+            linear-gradient(to bottom, rgba(58,42,26,0.35) 0 60%, transparent 60%),
+            linear-gradient(to bottom, rgba(58,42,26,0.25) 0 60%, transparent 60%),
+            linear-gradient(to bottom, rgba(58,42,26,0.18) 0 60%, transparent 60%);
+
+    background-size:
+            1px 100%,
+            1px 100%,
+            1px 100%,
+            1px 100%;
+
+    background-position:
+            99% center,
+            95% center,
+            90% center,
+            75% center;
+
+    background-repeat: no-repeat;
+}
+
+.elo-bar-fill {
+    height: 100%;
+    background-color: #3a2a1a;
+    border-radius: 3px 0 0 3px;
+    transition: width 0.4s ease;
+    position: relative;
+    z-index: 1;
+}
+
+
+.elo-bar {
+    position: relative;
+    width: 100%;
+    height: 6px;
+    background: rgba(58, 42, 26, 0.15);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(58, 42, 26, 0.2);
+}
+
+
+
+.elo-bar-fill {
+    height: 100%;
+    background-color: #3a2a1a;
+    border-radius: 3px 0 0 3px;
+    transition: width 0.4s ease;
 }

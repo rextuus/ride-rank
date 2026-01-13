@@ -1,10 +1,16 @@
-<header class="navbar-light bg-light shadow-sm">
-    <div class="container">
-        <span class="navbar-brand mb-0 h1">
+<header class="navbar navbar-expand-lg shadow-sm sticky-top">
+    <div class="container d-flex justify-content-between align-items-center">
+        <a href="{{ path('app_ranking') }}" class="navbar-brand mb-0 h1 d-flex align-items-center text-decoration-none">
             <img src="https://res.cloudinary.com/duzqnf8fu/image/upload/v1768161450/ride-rank-drawn-blank_g9ucsn.png"
                  alt="Achterbahn Karten"
                  class="navbar-logo me-2">
-            <h2>Ride-Rank</h2>
-        </span>
+            <h2 class="mb-0">Ride-Rank</h2>
+        </a>
+
+        <div class="navbar-nav">
+            <a href="{{ path('app_login') }}" class="nav-link p-0">
+                <img src="{{ asset('icons/user-blank.png') }}" alt="Login" class="navbar-icon" style="height: 50px; width: auto;">
+            </a>
+        </div>
     </div>
 </header>

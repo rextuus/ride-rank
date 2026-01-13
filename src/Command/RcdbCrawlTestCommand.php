@@ -22,7 +22,6 @@ class RcdbCrawlTestCommand extends Command
 {
     public function __construct(
         private readonly MessageBusInterface $messageBus,
-        private readonly ErrorSummaryService $errorSummary,
     ) {
         parent::__construct();
     }

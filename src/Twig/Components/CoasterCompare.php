@@ -2,25 +2,25 @@
 
 namespace App\Twig\Components;
 
-use App\Common\Entity\Enum\LocationType;
 use App\Entity\Coaster;
 use App\Entity\RiddenCoaster;
 use App\Entity\User;
 use App\Repository\CoasterRepository;
 use App\Repository\RiddenCoasterRepository;
+use App\Service\Ranking\PairwiseComparisonService;
+use App\Service\Ranking\UserCoasterRatingService;
 use App\Service\Rating\EloRatingService;
 use App\Service\Rating\MatchupSelectionService;
-use App\Service\Rating\PairwiseComparisonService;
-use App\Service\UnitConversionService;
+use App\Service\Util\CoasterNormalizer;
 use DateTime;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
-use Symfony\UX\LiveComponent\Attribute\LiveProp;
-use Symfony\UX\LiveComponent\DefaultActionTrait;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
 use Symfony\UX\LiveComponent\Attribute\LiveArg;
+use Symfony\UX\LiveComponent\Attribute\LiveProp;
+use Symfony\UX\LiveComponent\DefaultActionTrait;
 
 #[AsLiveComponent]
 class CoasterCompare
@@ -44,10 +44,11 @@ class CoasterCompare
         private readonly RiddenCoasterRepository $riddenCoasterRepository,
         private readonly MatchupSelectionService $matchupSelectionService,
         private readonly EloRatingService $eloRatingService,
+        private readonly UserCoasterRatingService $userCoasterRatingService,
         private readonly PairwiseComparisonService $pairwiseComparisonService,
         private readonly Security $security,
         private readonly EntityManagerInterface $entityManager,
-        private readonly UnitConversionService $unitConversionService,
+        private readonly CoasterNormalizer $coasterNormalizer
     ) {
         $this->lastInteraction = new DateTime();
     }
@@ -144,6 +145,7 @@ class CoasterCompare
         );
 
         $this->eloRatingService->updateRatings($comparison);
+        $this->userCoasterRatingService->applyComparison($comparison);
     }
 
     private function pickNewCoasters(): void
@@ -208,76 +210,12 @@ class CoasterCompare
 
     private function normalizeCoaster(Coaster $coaster): array
     {
-        $park = '';
-        $country = '';
-
-        foreach ($coaster->getLocations() as $location) {
-            if ($location->getType() === LocationType::AMUSEMENT_PARK) {
-                $park = $location->getName();
-            }
-            if ($location->getType() === LocationType::COUNTRY) {
-                $country = $location->getName();
-            }
-        }
-
-        $image = $coaster->getCdnImageUrl();
-        if ($image === null) {
-            $image = $coaster->getRcdbImageUrl();
-        }
-
-        $track = null;
-        if ($coaster->getTrack()) {
-            $trackEntity = $coaster->getTrack();
-            $track = [
-                'length' => [
-                    'value' => $this->convertLength($trackEntity->getLength()),
-                    'favorite' => false,
-                    'unit' => $this->useMetricUnits ? 'm' : 'ft'
-                ],
-                'height' => [
-                    'value' => $this->convertLength($trackEntity->getHeight()),
-                    'favorite' => false,
-                    'unit' => $this->useMetricUnits ? 'm' : 'ft'
-                ],
-                'speed' => [
-                    'value' => $this->convertSpeed($trackEntity->getSpeed()),
-                    'favorite' => false,
-                    'unit' => $this->useMetricUnits ? 'km/h' : 'mph'
-                ],
-                'inversions' => ['value' => $trackEntity->getInversions() ?: 0, 'favorite' => false],
-                'duration' => ['value' => $trackEntity->getDuration(), 'favorite' => false, 'unit' => 's'],
-                'drop' => [
-                    'value' => $this->convertLength($trackEntity->getDrop()),
-                    'favorite' => false,
-                    'unit' => $this->useMetricUnits ? 'm' : 'ft'
-                ],
-                'verticalAngle' => ['value' => $trackEntity->getVerticalAngle(), 'favorite' => false, 'unit' => '°'],
-                'manufacturer' => ['value' => $coaster->getManufacturer()->getName(), 'favorite' => false],
-                'model' => ['value' => $coaster->getModels()->first() ? $coaster->getModels()->first()->getName() : null, 'favorite' => false],
-            ];
-        }
-
-        $isSeen = false;
         $user = $this->security->getUser();
-        if ($user instanceof User) {
-            $isSeen = $this->riddenCoasterRepository->findOneBy([
-                'user' => $user,
-                'coaster' => $coaster,
-            ]) !== null;
-        }
 
-        return [
-            'id' => $coaster->getId(),
-            'name' => $coaster->getName(),
-            'image' => $image,
-            'park' => $park,
-            'country' => $country,
-            'track' => $track,
-            'isSeen' => $isSeen,
-        ];
+        return $this->coasterNormalizer->normalize($coaster, $user, $this->useMetricUnits);
     }
 
-    private function markFavorites()
+    private function markFavorites(): void
     {
         // compare values of left and right track elements and set favorite flag
         foreach ($this->left['track'] as $key => $leftValue) {
@@ -306,21 +244,5 @@ class CoasterCompare
                 $this->right['track'][$key]['favorite'] = true;
             }
         }
-    }
-
-    private function convertLength(?float $feet): ?float
-    {
-        if ($feet === null) {
-            return null;
-        }
-        return $this->useMetricUnits ? $this->unitConversionService->feetToMeters($feet) : $feet;
-    }
-
-    private function convertSpeed(?float $mph): ?float
-    {
-        if ($mph === null) {
-            return null;
-        }
-        return $this->useMetricUnits ? $this->unitConversionService->mphToKmh($mph) : $mph;
     }
 }

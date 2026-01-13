@@ -84,7 +84,9 @@ footer {
 
 
 .navbar {
-    padding: 0.5rem 0; // Adjust padding to control header height
+    padding: 0 0; // Adjust padding to control header height
+    background-color: $footer-background;
+    backdrop-filter: blur(10px);
 }
 
 
@@ -92,9 +94,6 @@ footer {
     display: flex;
     align-items: center;
     height: 61px; // Fixed height for the brand container
-
-    background-color: $footer-background;
-    backdrop-filter: blur(10px);
     color: #000000;
 }
 
@@ -110,6 +109,16 @@ footer {
     }
     backdrop-filter: none;
 
+}
+
+.navbar-icon {
+    filter: brightness(0); // Make the icon black to match the brand text
+    opacity: 0.8;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 1;
+    }
 }
 
 @media (max-width: 576px) {

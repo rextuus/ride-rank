@@ -2,100 +2,97 @@
 
 namespace App\Controller;
 
+use App\Common\Entity\Enum\LocationType;
+use App\Entity\User;
+use App\Repository\CoasterRepository;
+use App\Repository\RiddenCoasterRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 final class CollectionController extends AbstractController
 {
-    // src/Controller/CollectionController.php
     #[Route('/collection', name: 'app_collection')]
-    public function index(\Symfony\Component\HttpFoundation\Request $request): Response
-    {
+    public function index(
+        Request $request,
+        RiddenCoasterRepository $riddenRepo,
+        CoasterRepository $coasterRepo
+    ): Response {
         $columns = $request->query->getInt('columns', 2);
-        if (!in_array($columns, [1, 2, 4])) {
+        if (!in_array($columns, [1, 2, 4], true)) {
             $columns = 2;
         }
 
-        $page = $request->query->getInt('page', 1);
-        $limit = 16; // Beispiel-Limit pro Album-Seite
-
-        $coasters = [];
-        // Erzeuge mehr Testdaten für Paginierung
-        $baseCoasters = [
-            [
-                'name' => 'Blue Fire',
-                'park' => 'Europa Park',
-                'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767990513/coasters/images/77.png',
-                'ridden' => true,
-                'rating' => 4
-            ],
-            [
-                'name' => 'Voltron Nevera',
-                'park' => 'Europa Park',
-                'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767993318/coasters/images/1.png',
-                'ridden' => false,
-                'rating' => 5
-            ],
-            [
-                'name' => 'Wodan Timburcoaster',
-                'park' => 'Europa Park',
-                'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767709473/coasters/cartoonized/204.png',
-                'ridden' => true,
-                'rating' => 3
-            ],
-            [
-                'name' => 'Taron',
-                'park' => 'Phantasialand',
-                'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767691616/coasters/cartoonized/202.png',
-                'ridden' => false,
-                'rating' => 5
-            ],
-            [
-                'name' => 'Black Mamba',
-                'park' => 'Phantasialand',
-                'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767691212/coasters/cartoonized/201.png',
-                'ridden' => true,
-                'rating' => 4
-            ],
-            [
-                'name' => 'Expedition GeForce',
-                'park' => 'Holiday Park',
-                'country' => 'Deutschland',
-                'image' => 'https://res.cloudinary.com/duzqnf8fu/image/upload/v1767692925/coasters/cartoonized/203.png',
-                'ridden' => false,
-                'rating' => 5
-            ],
-        ];
-
-        for ($i = 0; $i < 40; $i++) {
-            $c = $baseCoasters[$i % count($baseCoasters)];
-            $c['name'] .= ' ' . ($i + 1);
-            $coasters[] = $c;
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('app_login');
         }
 
-        $totalCount = count($coasters);
-        $totalPages = (int) ceil($totalCount / $limit);
-        $offset = ($page - 1) * $limit;
-        $pagedCoasters = array_slice($coasters, $offset, $limit);
+        // 1. User-specific data
+        $riddenCoasters = $riddenRepo->getRiddenCoasterOfUser($user);
 
-        // Gruppierung
+        // 2. Global context
+        $maxElo = $coasterRepo->getMaxElo();
+        $globalRanks = $coasterRepo->getGlobalRanks();
+
+        $unlockedParks = [];
+
+        foreach ($riddenCoasters as $ridden) {
+            $coaster = $ridden->getCoaster();
+            $park = $coaster
+                ->getFirstLocationOfType(LocationType::AMUSEMENT_PARK)
+                ?->getIdent();
+
+            if ($park) {
+                $unlockedParks[$park] = true;
+            }
+        }
+
+        $unlockedParks = array_keys($unlockedParks);
+
+        $allParkCoasters = $coasterRepo->findByParks($unlockedParks);
+
         $coastersByPark = [];
-        foreach ($pagedCoasters as $c) {
-            $coastersByPark[$c['park']][] = $c;
+
+        $riddenMap = [];
+        foreach ($riddenCoasters as $ridden) {
+            $riddenMap[$ridden->getCoaster()->getId()] = true;
         }
+
+        foreach ($allParkCoasters as $coaster) {
+            $park = $coaster
+                ->getFirstLocationOfType(LocationType::AMUSEMENT_PARK)
+                ?->getName() ?? 'Unknown park';
+
+            $elo = (int) round($coaster->getRating());
+            $eloPercent = $maxElo > 0
+                ? (int) round(($elo / $maxElo) * 100)
+                : 0;
+
+            $isRidden = isset($riddenMap[$coaster->getId()]);
+
+            $coastersByPark[$park][] = [
+                'id'       => $coaster->getId(),
+                'name'       => $coaster->getName() ?? 'Unknown',
+                'park'       => $park,
+                'country'    => $coaster
+                    ->getFirstLocationOfType(LocationType::AMUSEMENT_PARK)
+                    ?->getName(),
+                'image'      => $coaster->getCdnImageUrl()
+                    ?? $coaster->getRcdbImageUrl(),
+                'ridden'     => $isRidden,
+                'elo'        => $elo,
+                'eloPercent' => $isRidden ? $eloPercent : 0,
+                'rank'       => $globalRanks[$coaster->getId()] ?? null,
+            ];
+        }
+
 
         return $this->render('collection/collection.html.twig', [
             'coastersByPark' => $coastersByPark,
-            'columns' => $columns,
-            'currentPage' => $page,
-            'totalPages' => $totalPages,
+            'columns'        => $columns,
         ]);
     }
-
 }
+

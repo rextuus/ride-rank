@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\PairwiseComparison;
+use App\Service\Ranking\RankingFilter;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
