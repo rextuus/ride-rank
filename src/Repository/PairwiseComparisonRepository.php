@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Entity\Coaster;
 use App\Entity\PairwiseComparison;
+use App\Entity\User;
 use App\Service\Ranking\RankingFilter;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -41,4 +43,34 @@ class PairwiseComparisonRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    public function findRecentByUser(User $user, int $limit = 10): array
+    {
+        return $this->createQueryBuilder('pc')
+            ->andWhere('pc.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('pc.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return array<Coaster>
+     */
+    public function findRecentCoastersForUser(User $user, int $limit): array
+    {
+        $qb = $this->createQueryBuilder('pc')
+            ->select('DISTINCT c')
+            ->join('pc.coasterA', 'c')
+            ->where('pc.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('pc.createdAt', 'DESC')
+            ->setMaxResults($limit);
+
+        return array_map(
+            fn ($row) => $row[0],
+            $qb->getQuery()->getResult()
+        );
+    }
 }

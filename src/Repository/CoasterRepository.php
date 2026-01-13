@@ -241,4 +241,20 @@ class CoasterRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    // src/Repository/CoasterRepository.php
+
+    public function findRandomCandidates(
+        array $excludeCoasterIds,
+        int $limit
+    ): array {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.id NOT IN (:exclude)')
+            ->setParameter('exclude', $excludeCoasterIds ?: [0])
+            ->orderBy('RAND()') // MySQL
+            // ->orderBy('RANDOM()') // PostgreSQL
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
 }

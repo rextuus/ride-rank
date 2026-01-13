@@ -9,6 +9,7 @@ use App\Entity\Location;
 use App\Entity\User;
 use App\Repository\CoasterRepository;
 use App\Repository\LocationRepository;
+use App\Repository\RiddenCoasterRepository;
 use App\Repository\UserCoasterAffinityRepository;
 use LogicException;
 use Psr\Log\LoggerInterface;
@@ -30,7 +31,7 @@ readonly class MatchupSelectionService
         private CoasterRepository $coasterRepository,
         private LocationRepository $locationRepository,
         private ChallengeScoreCalculator $challengeScoreCalculator,
-        private ChallengeCoasterPoolProvider $challengeCoasterPoolProvider,
+        private ChallengeCandidateSelector $candidateSelector,
         private LoggerInterface $matchupLogger
     ) {
     }
@@ -196,53 +197,30 @@ readonly class MatchupSelectionService
         return $anchorCoaster;
     }
 
-    private function determineChallengerCoaster(Coaster $anchorCoaster, float $temperature, ?User $user): ?Coaster
-    {
-        $candidates = [];
-
-        $similarElo = $this->challengeCoasterPoolProvider->getCoasterBySimilarEloRating($anchorCoaster);
-        $lowComparison = $this->challengeCoasterPoolProvider->getCoasterByLowComparisonCount();
-        $sameCountry = $this->challengeCoasterPoolProvider->getCoasterFromSameCountry($anchorCoaster);
-        $randomLocation = $this->challengeCoasterPoolProvider->getCoasterByRandomLocationType($anchorCoaster);
-
-        $this->matchupLogger->debug('Challenger candidates pool sizes', [
-            'similarElo' => count($similarElo),
-            'lowComparison' => count($lowComparison),
-            'sameCountry' => count($sameCountry),
-            'randomLocation' => count($randomLocation),
-        ]);
-
-        $candidates[] = $similarElo;
-        $candidates[] = $lowComparison;
-        $candidates[] = $sameCountry;
-        $candidates[] = $randomLocation;
-
-        // Flatten array of arrays
-        $candidates = array_merge(...array_filter($candidates));
-
-        // Deduplicate by coaster ID
-        $candidates = $this->deduplicateCoasters($candidates, $anchorCoaster);
-
-        $this->matchupLogger->debug('Total unique challenger candidates', ['count' => count($candidates)]);
+    private function determineChallengerCoaster(
+        Coaster $anchorCoaster,
+        float $temperature,
+        ?User $user
+    ): ?Coaster {
+        $candidates = $this->candidateSelector->selectCandidates(
+            $user,
+            $anchorCoaster,
+            50
+        );
 
         if (count($candidates) === 0) {
             return null;
         }
 
-        // Score
         $scored = [];
         foreach ($candidates as $candidate) {
-            $score = $this->challengeScoreCalculator->calculateChallengerScore($anchorCoaster, $candidate, $user);
+            $score = $this->challengeScoreCalculator
+                ->calculateChallengerScore($anchorCoaster, $candidate, $user);
+
             $scored[] = [
                 'coaster' => $candidate,
                 'score' => $score,
             ];
-
-            $this->matchupLogger->debug('Scored candidate', [
-                'id' => $candidate->getId(),
-                'name' => $candidate->getName(),
-                'score' => $score,
-            ]);
         }
 
         return $this->challengeScoreCalculator->sampleByScore($scored, $temperature);

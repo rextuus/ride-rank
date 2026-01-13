@@ -33,7 +33,7 @@ readonly class ChallengeCoasterPoolProvider
         return $this->coasterRepository->findCoastersByLocation(
             $location,
             false,
-            10
+            1000
         );
     }
 
@@ -50,7 +50,7 @@ readonly class ChallengeCoasterPoolProvider
         return $this->coasterRepository->findCoastersByLocation(
             $country,
             false,
-            10
+            1000
         );
     }
 
@@ -59,7 +59,7 @@ readonly class ChallengeCoasterPoolProvider
      */
     public function getCoasterByLowComparisonCount(): array
     {
-        return $this->coasterRepository->findLowComparisonRateCoasters(10);
+        return $this->coasterRepository->findLowComparisonRateCoasters(1000);
     }
 
     /**
@@ -69,7 +69,7 @@ readonly class ChallengeCoasterPoolProvider
     {
         return $this->coasterRepository->findDistinctCoasterWithSimilarEloRating(
             $anchorCoaster->getRating(),
-            10
+            1000
         );
     }
 }
