@@ -1,0 +1,165 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin: Pairwise Comparisons{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1 class="mb-4">Admin: Pairwise Comparisons Monitor</h1>
+
+        {# Filter Card #}
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Filter by Coaster</h5>
+                {{ form_start(form) }}
+                <div class="row align-items-end">
+                    <div class="col-md-10">
+                        {{ form_row(form.coaster) }}
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100">Apply</button>
+                    </div>
+                </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+
+        {# Coaster Primary Stats #}
+        {% if coaster and stats %}
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">Coaster: {{ coaster.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Rating (Elo)
+                                    <span class="badge bg-danger rounded-pill">
+                                    {{ stats.rating|number_format(1) }}
+                                </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Global Rank
+                                    <span class="badge bg-primary rounded-pill">
+                                    #{{ stats.globalRank }}
+                                </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Rating Deviation
+                                    <span class="badge bg-secondary rounded-pill">
+                                    {{ stats.ratingDeviation }}
+                                </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Confidence Score
+                                    <span class="badge bg-info rounded-pill">
+                                    {{ stats.confidenceScore }}
+                                </span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Activity</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Total Comparisons
+                                    <span class="badge bg-dark rounded-pill">
+                                    {{ stats.comparisonsTotal }}
+                                </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Last 24 Hours
+                                    <span class="badge bg-success rounded-pill">
+                                    {{ stats.comparisonsLast24h }}
+                                </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Last 7 Days
+                                    <span class="badge bg-success rounded-pill">
+                                    {{ stats.comparisonsLast7d }}
+                                </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Unique Players
+                                    <span class="badge bg-secondary rounded-pill">
+                                    {{ stats.uniquePlayers }}
+                                </span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Win Rate
+                                    <span class="badge bg-success rounded-pill">
+                                    {{ stats.winRate }}%
+                                </span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {# Pairwise Comparisons Feed #}
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    {% if coaster %}
+                        Latest Comparisons for {{ coaster.name }}
+                    {% else %}
+                        Latest Pairwise Comparisons (Global)
+                    {% endif %}
+                </h5>
+            </div>
+
+            <div class="card-body">
+                {% if comparisons %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Player</th>
+                                <th>Coaster A</th>
+                                <th>Coaster B</th>
+                                <th>Winner</th>
+                                <th>Response</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for comp in comparisons %}
+                                <tr>
+                                    <td>{{ comp.createdAt|date('Y-m-d H:i') }}</td>
+                                    <td>{{ comp.player.user.email ?? 'Anonymous' }}</td>
+                                    <td>{{ comp.coasterA.name }}</td>
+                                    <td>{{ comp.coasterB.name }}</td>
+                                    <td>
+                                        {% if comp.outcome == 'skip' %}
+                                            <span class="badge bg-secondary">Skipped</span>
+                                        {% elseif comp.winner %}
+                                            <span class="badge bg-success">{{ comp.winner.name }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ comp.responseTimeMs ? comp.responseTimeMs ~ ' ms' : '-' }}</td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 text-muted">
+                        No pairwise comparisons found.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

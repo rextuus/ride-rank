@@ -1,0 +1,242 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin: Player/Coaster Stats{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1 class="mb-4">Admin: Player & Coaster Statistics</h1>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Select Player and Coaster</h5>
+                {{ form_start(form) }}
+                <div class="row align-items-end">
+                    <div class="col-md-5">
+                        {{ form_row(form.player) }}
+                    </div>
+                    <div class="col-md-5">
+                        {{ form_row(form.coaster) }}
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Analyze</button>
+                    </div>
+                </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+
+        {% if data %}
+            <div class="row">
+                {# Player Section #}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm border-info">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Player: {{ data.player.user.email ?? 'Anonymous' }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    UUID
+                                    <span class="badge bg-secondary rounded-pill">{{ data.player.id }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Experience
+                                    <span class="badge bg-primary rounded-pill">{{ data.player.experience }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Level
+                                    <span class="badge bg-success rounded-pill">{{ data.player.experienceLevel.name }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Home Country
+                                    <span>{{ data.player.homeCountry.name ?? 'Unknown' }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Created At
+                                    <span>{{ data.player.createdAt|date('Y-m-d H:i') }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Last Seen
+                                    <span>{{ data.player.lastSeenAt|date('Y-m-d H:i') }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                {# Coaster Section #}
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100 shadow-sm border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">Coaster: {{ data.coaster.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    ID
+                                    <span class="badge bg-secondary rounded-pill">{{ data.coaster.id }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Current Rating (Elo)
+                                    <span class="badge bg-danger rounded-pill">{{ data.coaster.rating|number_format(1) }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Total Comparisons
+                                    <span class="badge bg-primary rounded-pill">{{ data.coaster.comparisonsCount }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Status
+                                    <span class="badge bg-info rounded-pill">{{ data.coaster.status.value }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Manufacturer
+                                    <span>{{ data.coaster.manufacturer.name ?? '-' }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                {# Relationship Section #}
+                <div class="col-12 mb-4">
+                    <div class="card shadow-sm border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Player ↔ Coaster Relationship</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded bg-light">
+                                        <div class="text-muted small">Ridden Status</div>
+                                        <div class="h4 mb-0">
+                                            {% if data.ridden %}
+                                                <span class="text-success">✓ Ridden</span>
+                                            {% else %}
+                                                <span class="text-muted">Not Ridden</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded bg-light">
+                                        <div class="text-muted small">Total Exposure</div>
+                                        <div class="h4 mb-0 text-primary">{{ data.affinity.exposureCount ?? 0 }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded bg-light">
+                                        <div class="text-muted small">Win/Loss Ratio</div>
+                                        <div class="h4 mb-0">
+                                            <span class="text-success">{{ data.affinity.winCount ?? 0 }}</span>
+                                            <span class="text-muted mx-1">/</span>
+                                            <span class="text-danger">{{ data.affinity.lossCount ?? 0 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="p-3 border rounded bg-light">
+                                        <div class="text-muted small">Confidence Score</div>
+                                        <div class="h4 mb-0 text-info">{{ data.affinity.confidenceScore ?? 0|number_format(2) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if data.playerRating %}
+                                <div class="row text-center mt-3">
+                                    <div class="col-md-3 mb-3">
+                                        <div class="p-3 border rounded bg-light border-success">
+                                            <div class="text-muted small">User Elo Score</div>
+                                            <div class="h4 mb-0 text-success">{{ data.playerRating.rating|number_format(1) }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="p-3 border rounded bg-light">
+                                            <div class="text-muted small">Games Played</div>
+                                            <div class="h4 mb-0">{{ data.playerRating.gamesPlayed }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="p-3 border rounded bg-light">
+                                            <div class="text-muted small">Wins</div>
+                                            <div class="h4 mb-0 text-success">{{ data.playerRating.wins }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="p-3 border rounded bg-light">
+                                            <div class="text-muted small">Losses</div>
+                                            <div class="h4 mb-0 text-danger">{{ data.playerRating.losses }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if data.affinity %}
+                                <hr>
+                                <div class="mt-3">
+                                    <strong>Last Interaction:</strong>
+                                    {{ data.affinity.lastSeenAt ? data.affinity.lastSeenAt|date('Y-m-d H:i') : 'Never' }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {# Pairwise Comparisons Section #}
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0">Pairwise Comparisons History</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if data.comparisons %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle">
+                                        <thead class="table-light">
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Opponent</th>
+                                            <th>Result</th>
+                                            <th>Response Time</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for comp in data.comparisons %}
+                                            {% set opponent = (comp.coasterA.id == data.coaster.id) ? comp.coasterB : comp.coasterA %}
+                                            <tr>
+                                                <td>{{ comp.createdAt|date('Y-m-d H:i') }}</td>
+                                                <td>{{ opponent.name }}</td>
+                                                <td>
+                                                    {% if comp.outcome == 'skip' %}
+                                                        <span class="badge bg-secondary">SKIPPED</span>
+                                                    {% elseif comp.winner and comp.winner.id == data.coaster.id %}
+                                                        <span class="badge bg-success">WIN</span>
+                                                        <span class="small text-muted ms-1">Beat {{ opponent.name }}</span>
+                                                    {% elseif comp.winner %}
+                                                        <span class="badge bg-danger">LOSS</span>
+                                                        <span class="small text-muted ms-1">Lost to {{ opponent.name }}</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">N/A</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ comp.responseTimeMs ? comp.responseTimeMs ~ ' ms' : '-' }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4 text-muted">
+                                    <p class="mb-0">No pairwise comparisons found for this combination.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% elseif submitted %}
+            <div class="alert alert-info">
+                No relationship data found for this player and coaster combination.
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

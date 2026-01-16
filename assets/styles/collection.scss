@@ -21,7 +21,7 @@
             overflow: hidden; // Contain everything
             width: 100%; // Ensure it doesn't expand beyond viewport
             box-sizing: border-box;
-            
+
             // "Ringbuch"-Effekt links
             &::before {
                 content: '';
@@ -46,17 +46,24 @@
         }
     }
 
-    h2 {
+    h2.page-title {
         font-family: 'Serif', Georgia, serif !important; // Album-Stil
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #333;
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #3a2a1a;
+        letter-spacing: -0.5px;
+        text-shadow: 1px 1px 0px rgba(255,255,255,0.5);
     }
 
     .view-controls {
         .btn-group {
+            .btn-xs {
+                padding: 0.15rem 0.5rem;
+                font-size: 0.75rem;
+                line-height: 1.5;
+                border-radius: 4px;
+            }
             .btn {
-                padding: 0.25rem 0.75rem;
                 &.active {
                     background-color: #3a2a1a;
                     border-color: #3a2a1a;
@@ -67,64 +74,164 @@
     }
 
     // Filter & Sortieren Buttons
+    // Pagination moved to top and aligned with header buttons
     .collection-header {
         display: flex;
-        gap: 0.6rem;
-        margin-bottom: 2rem;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 1rem;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
 
-        .btn {
+        // Inline pagination style
+        .album-pagination-inline {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 0.5rem;
 
-            border-radius: 4px; 
-            font-size: 0.9rem;
-            font-weight: 500;
-            padding: 0.4rem 0.8rem;
+            .btn-pagination {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+                font-weight: 600;
+                border-radius: 8px;
+                border: 1px solid #dcdcdc;
+                background-color: #fff;
+                color: #5d4a3a;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                transition: all 0.2s ease;
 
-            border: 1px solid #ccc;
-            background-color: #fff;
-            color: #555;
+                svg {
+                    width: 18px;
+                    height: 18px;
+                }
 
-            .icon {
-                width: 18px;
-                height: 18px;
+                &:hover:not(:disabled) {
+                    background-color: #fcfaf8;
+                    border-color: #3a2a1a;
+                    color: #3a2a1a;
+                    transform: translateY(-1px);
+                }
+
+                &:disabled {
+                    opacity: 0.4;
+                    cursor: default;
+                }
             }
 
-            &:hover {
-                background-color: #f8f8f8;
+            .album-page-indicator {
+                font-family: 'Serif', Georgia, serif;
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: #3a2a1a;
+                opacity: 0.7;
             }
+        }
 
-            &.active {
-                background-color: #eee;
-                border-color: #999;
-                color: #333;
+        .btn {
+            // Smaller version for filter & sort
+            &.btn-filter,
+            &.btn-sort {
+                padding: 0.35rem 0.7rem;  // reduce padding
+                font-size: 0.75rem;       // smaller text
+                font-weight: 600;
+                border-radius: 6px;       // slightly smaller radius
+                gap: 4px;                 // less space between icon and text
+
+                .icon {
+                    width: 16px;
+                    height: 16px;         // slightly smaller icon
+                }
+
+                &:hover {
+                    transform: translateY(-1px);
+                }
+
+                &.active {
+                    background-color: #3a2a1a;
+                    border-color: #3a2a1a;
+                    color: #fff;
+                }
             }
         }
     }
+
+    // Mobile adjustments for pagination
+    @media (max-width: 768px) {
+        .collection-header {
+            flex-direction: column;
+            align-items: stretch;
+
+            .album-pagination-inline {
+                justify-content: center;
+                margin-bottom: 0.5rem;
+            }
+        }
+    }
+
 
     // Park-Sektion
     .park-section {
         margin-bottom: 3rem;
 
-        .park-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #777;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .park-title-container {
+            .park-name {
+                font-family: 'Serif', Georgia, serif;
+                font-size: 1.75rem;
+                font-weight: 700;
+                color: #3a2a1a;
+            }
 
-            &::after {
-                content: '';
-                flex-grow: 1;
-                height: 1px;
-                background-color: #eee;
+            .park-subtitle {
+                color: #7a6f66;
+                font-weight: 500;
+            }
+
+            .park-progress-wrapper {
+                width: 100%;
+                max-width: 280px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+
+                .progress-label {
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    color: #8b7d71;
+                    font-size: 0.7rem;
+                }
+
+                .progress-percentage {
+                    color: #3a2a1a;
+                    font-size: 1rem;
+                }
+
+                .park-progress-bar {
+                    height: 10px;
+                    background: rgba(58, 42, 26, 0.1);
+                    border-radius: 6px;
+                    overflow: hidden;
+                    border: 1px solid rgba(58, 42, 26, 0.05);
+
+                    .park-progress-fill {
+                        height: 100%;
+                        background: linear-gradient(90deg, #3a2a1a, #8e6c4f);
+                        border-radius: 6px;
+                        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 0 0 10px rgba(58, 42, 26, 0.2);
+                    }
+                }
+            }
+
+            @media (max-width: 576px) {
+                .park-progress-wrapper {
+                    max-width: 100%;
+                }
+                .park-main-info .ms-5 {
+                    margin-left: 0 !important;
+                    margin-top: 4px;
+                }
             }
         }
     }
@@ -135,19 +242,19 @@
         gap: 1.5rem;
         width: 100%;
         min-width: 0; // Prevent overflow from content
-        
+
         max-width: 1200px;
         margin-left: auto;
         margin-right: auto;
 
-        &.cols-1 { 
+        &.cols-1 {
             grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
             .coaster-card {
                 max-width: 400px;
                 margin: 0 auto;
             }
         }
-        &.cols-2 { 
+        &.cols-2 {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             @media (min-width: 1200px) {
                 max-width: 800px;
@@ -180,7 +287,7 @@
             .coaster-card {
                 max-width: 250px;
                 margin: 0 auto;
-                
+
                 .coaster-image-wrapper {
                     .coaster-image-title {
                         h2, .card-title {
@@ -196,7 +303,7 @@
                     margin-top: -5px;
                 }
             }
-            
+
             @media (max-width: 768px) {
                 gap: 0.5rem;
                 .coaster-card {
@@ -249,7 +356,7 @@
             &:hover {
                 transform: scale(1.03);
                 z-index: 10;
-                
+
                 .info-overlay {
                     opacity: 1;
                 }
@@ -384,31 +491,33 @@
 
     // Pagination Album Style
     .album-pagination {
-        .page-link {
-            border: none;
-            color: #3a2a1a;
-            margin: 0 5px;
-            border-radius: 50% !important;
-            width: 35px;
-            height: 35px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
+        .btn-pagination {
+            font-size: 0.9rem;
+            font-weight: 700;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 
-            &:hover {
-                background-color: #f0f0f0;
+            &:hover:not(:disabled) {
+                background-color: #3a2a1a;
+                border-color: #3a2a1a;
+                color: #fff;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+            &:active:not(:disabled) {
+                transform: translateY(0);
             }
         }
 
-        .page-item.active .page-link {
-            background-color: #3a2a1a;
-            color: #fff;
-        }
-        
-        .page-item.disabled .page-link {
-            background: transparent;
-            color: #ccc;
+        .page-item.disabled {
+            opacity: 0.5;
+            .btn-pagination {
+                background: transparent;
+                border-color: #ddd;
+                color: #999;
+            }
         }
     }
 }
@@ -417,14 +526,14 @@
 @media (max-width: 768px) {
     .collection-page {
         //padding: 1rem 0;
-        
+
         &.album-theme .album-container {
             padding: 10px;
             max-width: 100%;
             border-radius: 0;
-            
+
             &::before { display: none; }
-            
+
             .album-page-inner {
                 padding: 0.5rem;
                 border: none;
@@ -534,4 +643,38 @@
     background-color: #3a2a1a;
     border-radius: 3px 0 0 3px;
     transition: width 0.4s ease;
+}
+
+.progress-circle {
+    width: 56px;
+    height: 56px;
+
+    svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+
+    .circle-bg {
+        fill: none;
+        stroke: rgba(58, 42, 26, 0.15);
+        stroke-width: 3;
+    }
+
+    .circle {
+        fill: none;
+        stroke: #3a2a1a;
+        stroke-width: 3;
+        stroke-linecap: round;
+        transition: stroke-dasharray 0.8s ease;
+    }
+
+    .percentage {
+        fill: #3a2a1a;
+        font-size: 0.4rem;
+        font-weight: 700;
+        text-anchor: middle;
+        transform: rotate(90deg);
+        font-family: 'Serif', Georgia, serif;
+    }
 }

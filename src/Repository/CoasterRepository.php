@@ -5,10 +5,13 @@ namespace App\Repository;
 use App\Common\Entity\Enum\LocationType;
 use App\Entity\Coaster;
 use App\Entity\Location;
-use App\Entity\User;
-use App\Entity\UserCoasterRating;
-use App\Service\Ranking\EloCoasterDto;
+use App\Entity\PairwiseComparison;
+use App\Entity\Player;
+use App\Entity\PlayerCoasterRating;
+use App\Service\PlayerRating\EloCoasterDto;
+use App\Service\Rating\ModelExclusionService;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -21,13 +24,44 @@ class CoasterRepository extends ServiceEntityRepository
         parent::__construct($registry, Coaster::class);
     }
 
+    /* -----------------------------
+     * PRIVATE HELPER
+     * ----------------------------- */
+
+    /**
+     * Apply an optional filter to exclude coasters with certain models.
+     *
+     * @param QueryBuilder $qb
+     * @param string[]|null $excludeModelIdents
+     */
+    private function applyModelExclusion(QueryBuilder $qb, ?array $excludeModelIdents): void
+    {
+        if (empty($excludeModelIdents)) {
+            return;
+        }
+
+        $subQb = $this->getEntityManager()->createQueryBuilder()
+            ->select('c_sub.id')
+            ->from(Coaster::class, 'c_sub')
+            ->innerJoin('c_sub.models', 'm_sub')
+            ->where('m_sub.ident IN (:excludedModels)');
+
+        $qb->andWhere(
+            $qb->expr()->notIn('c.id', $subQb->getDQL())
+        )->setParameter('excludedModels', $excludeModelIdents);
+    }
+
+    /* -----------------------------
+     * GENERAL QUERIES
+     * ----------------------------- */
+
     /**
      * @return array<Coaster>
      */
-    public function findCoastersByLocation(Location $location, bool $sortByPopularity = true, int $limit = 100): array
+    public function findCoastersByLocation(Location $location, bool $sortByPopularity = true, int $limit = 100, ?array $excludeModels = null): array
     {
-        $qb = $this->createQueryBuilder('c');
-        $qb->innerJoin('c.locations', 'l')
+        $qb = $this->createQueryBuilder('c')
+            ->innerJoin('c.locations', 'l')
             ->andWhere('l.type = :locationType')
             ->setParameter('locationType', $location->getType()->value)
             ->andWhere('l.ident = :countryName')
@@ -39,15 +73,13 @@ class CoasterRepository extends ServiceEntityRepository
                 ->orderBy('combinedScore', 'DESC');
         }
 
+        $this->applyModelExclusion($qb, $excludeModels);
+
         return $qb->getQuery()->getResult();
     }
 
-    /**
-     * @return array<Coaster>
-     */
-    public function findTopRated(float $topPercent = 10.0, int $limit = 100): array
+    public function findTopRated(float $topPercent = 10.0, int $limit = 100, ?array $excludeModels = null): array
     {
-        // Step 1: Count total coasters
         $totalCoasters = $this->createQueryBuilder('c')
             ->select('COUNT(c.id)')
             ->getQuery()
@@ -57,50 +89,40 @@ class CoasterRepository extends ServiceEntityRepository
             return [];
         }
 
-        // Step 2: Compute number of coasters in top X%
         $topCount = (int) ceil($totalCoasters * ($topPercent / 100));
 
-        // Step 3: Fetch top rated coasters
         $qb = $this->createQueryBuilder('c')
             ->addSelect('(c.rating * 0.7 + c.comparisonsCount * 0.3) AS HIDDEN combinedScore')
-            ->orderBy('combinedScore', 'DESC');
+            ->orderBy('combinedScore', 'DESC')
+            ->setMaxResults(min($limit, $topCount));
 
-        $qb->setMaxResults($topCount);
-        if ($limit !== null && $limit < $topCount) {
-            $qb->setMaxResults($limit);
-        }
+        $this->applyModelExclusion($qb, $excludeModels);
 
         return $qb->getQuery()->getResult();
     }
 
-    /**
-     * @return array<Coaster>
-     */
-    public function findDistinctCoasterWithSimilarEloRating(float $rating, int $limit = 100): array
+    public function findDistinctCoasterWithSimilarEloRating(float $rating, int $limit = 100, ?array $excludeModels = null): array
     {
-        $qb = $this->createQueryBuilder('c');
-
-        // We calculate the absolute difference from the target rating
-        // and use it to find the closest matches.
-        $qb->addSelect('ABS(c.rating - :targetRating) AS HIDDEN ratingDiff')
+        $qb = $this->createQueryBuilder('c')
+            ->addSelect('ABS(c.rating - :targetRating) AS HIDDEN ratingDiff')
             ->setParameter('targetRating', $rating)
-            // Prioritize coasters with fewer comparisons to help converge their true rating
             ->orderBy('ratingDiff', 'ASC')
             ->addOrderBy('c.comparisonsCount', 'ASC')
-            ->setMaxResults(20);
+            ->setMaxResults($limit);
+
+        $this->applyModelExclusion($qb, $excludeModels);
 
         return $qb->getQuery()->getResult();
     }
 
-    /**
-     * @return array<Coaster>
-     */
-    public function findLowComparisonRateCoasters(int $limit = 100): array
+    public function findLowComparisonRateCoasters(int $limit = 100, ?array $excludeModels = null): array
     {
-        $qb = $this->createQueryBuilder('c');
-        $qb->andWhere('c.comparisonsCount < :threshold')
+        $qb = $this->createQueryBuilder('c')
+            ->andWhere('c.comparisonsCount < :threshold')
             ->setParameter('threshold', 100)
             ->setMaxResults($limit);
+
+        $this->applyModelExclusion($qb, $excludeModels);
 
         return $qb->getQuery()->getResult();
     }
@@ -113,65 +135,68 @@ class CoasterRepository extends ServiceEntityRepository
             ->getSingleScalarResult();
     }
 
-
-    /**
-     * @return array<EloCoasterDto>
-     */
-    public function getCoasterWithHighestElo(?User $user = null, int $limit = 20): array
+    public function getCoasterWithHighestElo(?Player $player = null, int $limit = 20, ?array $excludeModels = null): array
     {
         $qb = $this->createQueryBuilder('c');
 
-        if ($user !== null) {
-            $qb->select('c', 'ucr')
-                ->leftJoin(
-                    UserCoasterRating::class,
-                    'ucr',
-                    'WITH',
-                    'ucr.coaster = c AND ucr.user = :user'
-                )
-                ->setParameter('user', $user);
-        } else {
-            $qb->select('c');
+        if ($player !== null) {
+            $qb->leftJoin(
+                PlayerCoasterRating::class,
+                'pcr',
+                'WITH',
+                'pcr.coaster = c AND pcr.player = :player'
+            )
+                ->setParameter('player', $player)
+                ->addSelect('pcr'); // important: select joined entity
         }
 
         $qb->orderBy('c.rating', 'DESC')
             ->setMaxResults($limit);
 
+        // Apply optional model exclusion
+        if (!empty($excludeModels)) {
+            $subQb = $this->getEntityManager()->createQueryBuilder()
+                ->select('c_sub.id')
+                ->from(Coaster::class, 'c_sub')
+                ->innerJoin('c_sub.models', 'm_sub')
+                ->where('m_sub.ident IN (:excludedModels)');
+
+            $qb->andWhere($qb->expr()->notIn('c.id', $subQb->getDQL()))
+                ->setParameter('excludedModels', $excludeModels);
+        }
+
         $results = $qb->getQuery()->getResult();
 
-        $result = [];
+        $final = [];
+
         foreach ($results as $row) {
-            $userRating = null;
-            if (is_array($row)) {
-                $coaster = $row[0] ?? null;
-                $userRating = $row['ucr'] ?? null;
-            } else {
+            // Handle both cases: simple Coaster object or [Coaster, PlayerCoasterRating|null]
+            if ($row instanceof Coaster) {
                 $coaster = $row;
+                $playerRating = null;
+            } elseif (is_array($row)) {
+                $coaster = $row[0] ?? null;
+                $playerRating = $row[1] ?? null;
+            } else {
+                continue;
             }
 
             if (!$coaster instanceof Coaster) {
                 continue;
             }
 
-            // If we have a user but no rating was joined, try to fetch it specifically
-            // This handles cases where Doctrine doesn't return the join as part of the array
-            if ($user !== null && $userRating === null) {
-                $userRating = $this->getEntityManager()
-                    ->getRepository(UserCoasterRating::class)
-                    ->findOneBy(['user' => $user, 'coaster' => $coaster]);
+            // fallback if join didn't return rating
+            if ($player !== null && $playerRating === null) {
+                $playerRating = $this->getEntityManager()
+                    ->getRepository(PlayerCoasterRating::class)
+                    ->findOneBy(['player' => $player, 'coaster' => $coaster]);
             }
 
-            $wins = 0;
-            $losses = 0;
-            $personalWins = 0;
-            $personalLosses = 0;
-            $personalRating = null;
-
-            // Get global stats from comparisons (could be optimized, but following current structure)
+            // global stats
             $wins = (int) $this->getEntityManager()
                 ->createQueryBuilder()
-                ->from('App\Entity\PairwiseComparison', 'pc')
                 ->select('COUNT(pc.id)')
+                ->from(PairwiseComparison::class, 'pc')
                 ->where('pc.winner = :coaster')
                 ->setParameter('coaster', $coaster)
                 ->getQuery()
@@ -179,35 +204,30 @@ class CoasterRepository extends ServiceEntityRepository
 
             $losses = (int) $this->getEntityManager()
                 ->createQueryBuilder()
-                ->from('App\Entity\PairwiseComparison', 'pc')
                 ->select('COUNT(pc.id)')
+                ->from(PairwiseComparison::class, 'pc')
                 ->where('pc.loser = :coaster')
                 ->setParameter('coaster', $coaster)
                 ->getQuery()
                 ->getSingleScalarResult();
 
-            if ($userRating !== null) {
-                $personalWins = $userRating->getWins();
-                $personalLosses = $userRating->getLosses();
-                $personalRating = $userRating->getRating();
-            }
+            $personalWins = $playerRating?->getWins() ?? 0;
+            $personalLosses = $playerRating?->getLosses() ?? 0;
+            $personalRatingValue = $playerRating?->getRating();
 
-            $result[] = new EloCoasterDto(
+            $final[] = new EloCoasterDto(
                 coaster: $coaster,
                 wins: $wins,
                 losses: $losses,
                 personalWins: $personalWins,
                 personalLosses: $personalLosses,
-                personalRating: $personalRating,
+                personalRating: $personalRatingValue
             );
         }
 
-        return $result;
+        return $final;
     }
 
-    /**
-     * @return array<int, int> coasterId => rank
-     */
     public function getGlobalRanks(): array
     {
         $rows = $this->createQueryBuilder('c')
@@ -218,7 +238,6 @@ class CoasterRepository extends ServiceEntityRepository
 
         $rank = 1;
         $ranks = [];
-
         foreach ($rows as $row) {
             $ranks[$row['id']] = $rank++;
         }
@@ -226,35 +245,136 @@ class CoasterRepository extends ServiceEntityRepository
         return $ranks;
     }
 
-    /**
-     * @return array<Coaster>
-     */
-    public function findByParks(array $parkNames): array
+    public function findRecentForPlayer(Player $player, int $limit): array
     {
-        return $this->createQueryBuilder('c')
+        $qb = $this->createQueryBuilder('c');
+        $qb->innerJoin(PairwiseComparison::class, 'pc', 'WITH', 'pc.coasterA = c OR pc.coasterB = c')
+            ->innerJoin(Player::class, 'p', 'WITH', 'pc.player = p')
+            ->andWhere($qb->expr()->eq('p.deviceHash', ':deviceHash'))
+            ->setParameter('deviceHash', $player->getDeviceHash())
+            ->orderBy('pc.createdAt', 'DESC')
+            ->setMaxResults($limit);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function findKnowledgeCandidates(array $excludedIds, int $limit, ?array $excludeModels = null): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->orderBy('c.rating', 'DESC')
+            ->addOrderBy('c.comparisonsCount', 'DESC')
+            ->setMaxResults($limit);
+
+        if (!empty($excludedIds)) {
+            $qb->andWhere('c.id NOT IN (:excluded)')
+                ->setParameter('excluded', $excludedIds);
+        }
+
+        $this->applyModelExclusion($qb, $excludeModels);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function getAllCoasterOfPark(string $currentParkName, ?array $excludeModels = null): array
+    {
+        $qb = $this->createQueryBuilder('c')
             ->leftJoin('c.locations', 'l')
             ->where('l.type = :type')
-            ->andWhere('l.ident IN (:parks)')
+            ->andWhere('l.ident = :parkName')
             ->setParameter('type', LocationType::AMUSEMENT_PARK->value)
-            ->setParameter('parks', $parkNames)
-            ->getQuery()
-            ->getResult();
+            ->setParameter('parkName', $currentParkName);
+
+        $this->applyModelExclusion($qb, $excludeModels);
+
+        return $qb->getQuery()->getResult();
     }
 
-    // src/Repository/CoasterRepository.php
+    public function findByParks(array $parkIds, int $limit = 100, ?array $excludeModels = null): array
+    {
+        if (empty($parkIds)) return [];
 
-    public function findRandomCandidates(
-        array $excludeCoasterIds,
-        int $limit
-    ): array {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.id NOT IN (:exclude)')
-            ->setParameter('exclude', $excludeCoasterIds ?: [0])
-            ->orderBy('RAND()') // MySQL
-            // ->orderBy('RANDOM()') // PostgreSQL
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+        $qb = $this->createQueryBuilder('c')
+            ->distinct()
+            ->innerJoin('c.locations', 'l')
+            ->where('l.type = :type')
+            ->andWhere('l.id IN (:parkIds)')
+            ->setParameter('type', LocationType::AMUSEMENT_PARK->value)
+            ->setParameter('parkIds', $parkIds)
+            ->setMaxResults($limit);
+
+        $this->applyModelExclusion($qb, $excludeModels);
+
+        return $qb->getQuery()->getResult();
     }
 
+    public function findByCountries(array $countryIds, int $limit = 100, ?array $excludeModels = null): array
+    {
+        if (empty($countryIds)) return [];
+
+        $qb = $this->createQueryBuilder('c')
+            ->distinct()
+            ->innerJoin('c.locations', 'l')
+            ->where('l.type = :type')
+            ->andWhere('l.id IN (:countryIds)')
+            ->setParameter('type', LocationType::COUNTRY->value)
+            ->setParameter('countryIds', $countryIds)
+            ->setMaxResults($limit);
+
+        $this->applyModelExclusion($qb, $excludeModels);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function findTopRatedByCountry(?Location $country, int $limit = 40, ?array $excludeModels = null): array
+    {
+        if (!$country) return [];
+
+        $qb = $this->createQueryBuilder('c')
+            ->leftJoin('c.locations', 'l')
+            ->andWhere('l.type = :type')
+            ->andWhere('l.ident = :countryIdent')
+            ->setParameter('type', LocationType::COUNTRY->value)
+            ->setParameter('countryIdent', $country->getIdent())
+            ->orderBy('c.rating', 'DESC')
+            ->addOrderBy('c.selectionSeed', 'ASC')
+            ->setMaxResults($limit);
+
+        $this->applyModelExclusion($qb, $excludeModels);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function findRandomGlobal(int $limit = 30, ?array $excludeModels = null): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->orderBy('RAND()')
+            ->setMaxResults($limit);
+
+        $this->applyModelExclusion($qb, $excludeModels);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function findLowExposureGlobal(int $limit = 50, ?array $excludeModels = null): array
+    {
+        $qb = $this->createQueryBuilder('c')
+            ->orderBy('c.comparisonsCount', 'ASC')
+            ->addOrderBy('c.rating', 'DESC')
+            ->addOrderBy('c.selectionSeed', 'ASC')
+            ->setMaxResults($limit);
+
+        $this->applyModelExclusion($qb, $excludeModels);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function getGlobalRank(Coaster $coaster): int
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        return (int) $conn->fetchOne(
+            'SELECT COUNT(*) + 1 FROM coaster WHERE rating > :rating',
+            ['rating' => $coaster->getRating()]
+        );
+    }
 }

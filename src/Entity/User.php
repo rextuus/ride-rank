@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -36,15 +34,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private bool $isVerified = false;
 
-    /**
-     * @var Collection<int, RiddenCoaster>
-     */
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: RiddenCoaster::class, orphanRemoval: true)]
-    private Collection $riddenCoasters;
-
     public function __construct()
     {
-        $this->riddenCoasters = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -136,40 +127,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setIsVerified(bool $isVerified): static
     {
         $this->isVerified = $isVerified;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, RiddenCoaster>
-     */
-    public function getRiddenCoasters(): Collection
-    {
-        return $this->riddenCoasters;
-    }
-
-    public function addRiddenCoaster(RiddenCoaster $riddenCoaster): static
-    {
-        if (!$this->riddenCoasters->contains($riddenCoaster)) {
-            $this->riddenCoasters->add($riddenCoaster);
-            $riddenCoaster->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeRiddenCoaster(RiddenCoaster $riddenCoaster): static
-    {
-        if ($this->riddenCoasters->removeElement($riddenCoaster)) {
-            // set the owning side to null (unless already changed)
-            if ($riddenCoaster->getUser() === $this) {
-                // Since user is not nullable in RiddenCoaster, we might need a special handling or 
-                // just rely on orphanRemoval: true which is set in OneToMany.
-                // However, standard Symfony pattern often shows this:
-                // $riddenCoaster->setUser(null); 
-                // but our RiddenCoaster::setUser(User $user) doesn't allow null.
-            }
-        }
 
         return $this;
     }

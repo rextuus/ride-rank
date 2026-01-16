@@ -1,0 +1,137 @@
+<div {{ attributes }}>
+    {% set activeFilter = false %}
+    {% set activeSort = true %}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="m-0 page-title">Meine Sammlung</h2>
+    </div>
+
+    <div class="collection-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+
+        {% if this.totalPages > 1 %}
+            <div class="album-pagination-inline d-flex align-items-center gap-2">
+                <button
+                        type="button"
+                        data-action="live#update"
+                        data-model="page"
+                        data-value="{{ page - 1 }}"
+                        class="btn btn-outline-primary btn-pagination"
+                        {{ page == 1 ? 'disabled' }}
+                >
+                    {{ ux_icon('material-symbols:chevron-left', {class: 'me-1'}) }}
+                    Zurück
+                </button>
+
+                <span class="album-page-indicator">{{ page }} / {{ this.totalPages }}</span>
+
+                <button
+                        type="button"
+                        data-action="live#update"
+                        data-model="page"
+                        data-value="{{ page + 1 }}"
+                        class="btn btn-outline-primary btn-pagination"
+                        {{ page == this.totalPages ? 'disabled' }}
+                >
+                    Weiter
+                    {{ ux_icon('material-symbols:chevron-right', {class: 'ms-1'}) }}
+                </button>
+            </div>
+        {% endif %}
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-filter {{ activeFilter ? 'active' }}">
+                {{ ux_icon('material-symbols:filter-alt-outline', {class: 'icon'}) }}
+                <span>Filter</span>
+            </button>
+            <button class="btn btn-sort {{ activeSort ? 'active' }}">
+                {{ ux_icon('material-symbols:sort', {class: 'icon'}) }}
+                <span>Sortieren</span>
+            </button>
+        </div>
+
+        <div class="view-controls d-flex align-items-center">
+            <span class="me-2 d-none d-sm-inline text-muted small">Ansicht:</span>
+            <div class="btn-group" role="group">
+                <button type="button" data-action="live#update" data-model="columns" data-value="1" class="btn btn-outline-secondary btn-xs {{ columns == 1 ? 'active' }}">1</button>
+                <button type="button" data-action="live#update" data-model="columns" data-value="2" class="btn btn-outline-secondary btn-xs {{ columns == 2 ? 'active' }}">2</button>
+                <button type="button" data-action="live#update" data-model="columns" data-value="4" class="btn btn-outline-secondary btn-xs {{ columns == 4 ? 'active' }}">4</button>
+            </div>
+        </div>
+    </div>
+
+    {% for park, data in this.coastersByPark %}
+        <div class="park-section">
+            <div class="park-title-container mb-4">
+                <div class="d-flex justify-content-between align-items-end flex-wrap gap-3">
+                    <div class="park-main-info">
+                        <div class="d-flex align-items-center mb-1">
+                            {{ ux_icon('tabler:rollercoaster', {style: 'height: 28px; margin-right: 10px; color: #3a2a1a;'}) }}
+                            <h3 class="park-name m-0">{{ park }}</h3>
+                        </div>
+                        <div class="park-subtitle text-muted small ms-5">
+                            {{ data.stats.ridden }} von {{ data.stats.total }} Bahnen gefahren
+                        </div>
+                    </div>
+
+                    <div class="park-progress-wrapper">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="progress-label small fw-bold me-3">Fortschritt</span>
+                            <div class="progress-circle" style="--percent: {{ data.stats.percent }}">
+                                <svg viewBox="0 0 36 36">
+                                    <path class="circle-bg"
+                                          d="M18 6
+             a 12 12 0 0 1 0 24
+             a 12 12 0 0 1 0 -24"/>
+                                    <path class="circle"
+                                          stroke-dasharray="{{ data.stats.percent }}, 100"
+                                          d="M18 6
+             a 12 12 0 0 1 0 24
+             a 12 12 0 0 1 0 -24"/>
+                                    <text x="18" y="20.5" class="percentage">{{ data.stats.percent }}%</text>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="park-progress-bar">
+                            <div class="park-progress-fill" style="width: {{ data.stats.percent }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="coaster-grid cols-{{ columns }}">
+                {% for coaster in data.coasters %}
+                    <div class="coaster-card position-relative {{ not coaster.ridden ? 'not-ridden' }}">
+                        <div class="coaster-image-wrapper">
+                            <img src="{{ coaster.image }}" class="img-fluid" alt="{{ coaster.name }}">
+                            <div class="coaster-image-title">
+                                <h5 class="card-title">{{ coaster.name }}</h5>
+                            </div>
+                            <div class="coaster-image-meta">
+                                <span>{{ coaster.park }}</span>
+                                <span class="mx-1">–</span>
+                                <em>{{ coaster.country }}</em>
+                            </div>
+                            <div class="info-overlay">
+                                <a href="{{ path('app_coaster_show', { coaster: coaster.id }) }}"
+                                   class="btn btn-sm btn-info-circle" title="Details">
+                                    {{ ux_icon('material-symbols:info-outline') }}
+                                </a>
+                            </div>
+                        </div>
+                        <div class="elo-wrapper">
+                            <div class="elo-label">
+                                <span class="elo-rank">#{{ coaster.rank }}</span>
+                            </div>
+                            <div class="elo-bar">
+                                <div
+                                        class="elo-bar-fill"
+                                        style="width: {{ coaster.eloPercent }}%;"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>

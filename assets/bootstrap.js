@@ -1,16 +1,13 @@
 // assets/bootstrap.js
-import { Application } from '@hotwired/stimulus';
-import { definitionsFromContext } from '@hotwired/stimulus-webpack-helpers';
+import { startStimulusApp } from '@symfony/stimulus-bridge';
 
 // Live Components importieren
-import { registerVueControllerComponents } from '@symfony/ux-live-component';
 import LiveController from '@symfony/ux-live-component';
 
-const application = Application.start();
-const context = require.context('./controllers', true, /\.js$/);
-application.load(definitionsFromContext(context));
-
-
-
+const application = startStimulusApp(require.context(
+    '@symfony/stimulus-bridge/lazy-controller-loader!./controllers',
+    true,
+    /\.[jt]sx?$/
+));
 
 application.register('live', LiveController);

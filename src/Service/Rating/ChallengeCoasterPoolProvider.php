@@ -7,7 +7,9 @@ namespace App\Service\Rating;
 use App\Common\Entity\Enum\LocationType;
 use App\Entity\Coaster;
 use App\Repository\CoasterRepository;
+use JetBrains\PhpStorm\Deprecated;
 
+#[Deprecated]
 readonly class ChallengeCoasterPoolProvider
 {
     public function __construct(private CoasterRepository $coasterRepository)

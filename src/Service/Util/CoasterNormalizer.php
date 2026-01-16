@@ -6,20 +6,24 @@ namespace App\Service\Util;
 
 use App\Common\Entity\Enum\LocationType;
 use App\Entity\Coaster;
-use App\Entity\User;
+use App\Entity\Player;
 use App\Repository\RiddenCoasterRepository;
+use App\Service\Player\PlayerContext;
 
 readonly class CoasterNormalizer
 {
     public function __construct(
         private UnitConversionService $unitConversionService,
         private RiddenCoasterRepository $riddenCoasterRepository,
+        private PlayerContext $playerContext
     )
     {
     }
 
-    public function normalize(Coaster $coaster, ?User $user = null, bool $useMetricUnits = true): array
+    public function normalize(Coaster $coaster, bool $useMetricUnits = true): array
     {
+        $player = $this->playerContext->getCurrentPlayer();
+
         $park = '';
         $country = '';
 
@@ -81,13 +85,7 @@ readonly class CoasterNormalizer
             ];
         }
 
-        $isSeen = false;
-        if ($user instanceof User) {
-            $isSeen = $this->riddenCoasterRepository->findOneBy([
-                    'user' => $user,
-                    'coaster' => $coaster,
-                ]) !== null;
-        }
+        $isSeen = $this->riddenCoasterRepository->existsForPlayerAndCoaster($player, $coaster);
 
         return [
             'id' => $coaster->getId(),

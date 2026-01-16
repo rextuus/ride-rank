@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Form\RegistrationFormType;
+use App\Repository\PlayerRepository;
 use App\Security\EmailVerifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -18,8 +19,10 @@ use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 
 class RegistrationController extends AbstractController
 {
-    public function __construct(private EmailVerifier $emailVerifier)
-    {
+    public function __construct(
+        private readonly EmailVerifier $emailVerifier,
+        private readonly PlayerRepository $playerRepository
+    ) {
     }
 
     #[Route('/register', name: 'app_register')]
@@ -36,6 +39,18 @@ class RegistrationController extends AbstractController
             // encode the plain password
             $user->setPassword($userPasswordHasher->hashPassword($user, $plainPassword));
 
+            // Attach pre-existing Player (if any)
+            $playerHash = $request->cookies->get('player_hash');
+            if ($playerHash) {
+                $player = $this->playerRepository->findOneBy(['deviceHash' => $playerHash]);
+                if ($player && $player->isAnonymous()) {
+                    $player->attachUser($user);
+                    // optional: refresh lastSeenAt
+                    $player->touch();
+                    $entityManager->persist($player);
+                }
+            }
+
             $entityManager->persist($user);
             $entityManager->flush();
 
@@ -47,8 +62,6 @@ class RegistrationController extends AbstractController
                     ->subject('Please Confirm your Email')
                     ->htmlTemplate('registration/confirmation_email.html.twig')
             );
-
-            // do anything else you need here, like send an email
 
             return $this->redirectToRoute('app_home');
         }

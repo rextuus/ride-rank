@@ -1,0 +1,43 @@
+<div{{ attributes }}>
+    <div class="elo-rating">
+        <div class="global-elo d-flex align-items-center">
+            <span class="me-1 small" style="min-width: 80px;">Community:</span>
+            <div class="rating-stars-score d-flex flex-column flex-sm-row align-items-sm-center">
+                <div class="stars d-inline-flex">
+                    {% set val = computed.transformedRating %}
+                    {% for i in 1..5 %}
+                        {% if i <= val %}
+                            {{ ux_icon('material-symbols:star', { style: 'color: #d4af37; width: 16px;' }) }}
+                        {% elseif i - 0.5 <= val %}
+                            {{ ux_icon('material-symbols:star-half', { style: 'color: #d4af37; width: 16px;' }) }}
+                        {% else %}
+                            {{ ux_icon('material-symbols:star-outline', { style: 'color: #d4af37; width: 16px;' }) }}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <small class="elo-score">({{ rating|round(0) }})</small>
+            </div>
+        </div>
+
+        {% if personalRating is not null %}
+            <div class="personal-elo d-flex align-items-center mt-1">
+                <span class="me-1 small" style="min-width: 80px;">Deine:</span>
+                <div class="rating-stars-score d-flex flex-column flex-sm-row align-items-sm-center">
+                    <div class="stars d-inline-flex">
+                        {% set pVal = computed.transformedPersonalRating %}
+                        {% for i in 1..5 %}
+                            {% if i <= pVal %}
+                                {{ ux_icon('material-symbols:star', { style: 'color: #d4af37; width: 16px;' }) }}
+                            {% elseif i - 0.5 <= pVal %}
+                                {{ ux_icon('material-symbols:star-half', { style: 'color: #d4af37; width: 16px;' }) }}
+                            {% else %}
+                                {{ ux_icon('material-symbols:star-outline', { style: 'color: #d4af37; width: 16px;' }) }}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <small class="elo-score">({{ personalRating|round(0) }})</small>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>

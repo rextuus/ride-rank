@@ -83,6 +83,9 @@ class Coaster
     #[ORM\ManyToMany(targetEntity: Model::class, inversedBy: 'coasters')]
     private Collection $models;
 
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    private int $selectionSeed = 0;
+
     public function __construct()
     {
         $this->locations = new ArrayCollection();
@@ -373,5 +376,22 @@ class Coaster
         $metadata->setCoaster($this);
 
         return $this;
+    }
+
+
+    public function getSelectionSeed(): int
+    {
+        return $this->selectionSeed;
+    }
+
+    public function setSelectionSeed(int $seed): self
+    {
+        $this->selectionSeed = $seed;
+        return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getName();
     }
 }

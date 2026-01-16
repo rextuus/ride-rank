@@ -3,18 +3,15 @@
 namespace App\Twig\Components;
 
 use App\Entity\Coaster;
-use App\Entity\RiddenCoaster;
-use App\Entity\User;
 use App\Repository\CoasterRepository;
-use App\Repository\RiddenCoasterRepository;
-use App\Service\Ranking\PairwiseComparisonService;
-use App\Service\Ranking\UserCoasterRatingService;
+use App\Service\Player\PlayerContext;
+use App\Service\Player\RiddenCoasterService;
+use App\Service\PlayerRating\PairwiseComparisonService;
+use App\Service\PlayerRating\PlayerCoasterRatingService;
 use App\Service\Rating\EloRatingService;
 use App\Service\Rating\MatchupSelectionService;
 use App\Service\Util\CoasterNormalizer;
 use DateTime;
-use DateTimeImmutable;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
@@ -41,14 +38,14 @@ class CoasterCompare
 
     public function __construct(
         private readonly CoasterRepository $coasterRepository,
-        private readonly RiddenCoasterRepository $riddenCoasterRepository,
         private readonly MatchupSelectionService $matchupSelectionService,
         private readonly EloRatingService $eloRatingService,
-        private readonly UserCoasterRatingService $userCoasterRatingService,
+        private readonly PlayerCoasterRatingService $playerCoasterRatingService,
         private readonly PairwiseComparisonService $pairwiseComparisonService,
         private readonly Security $security,
-        private readonly EntityManagerInterface $entityManager,
-        private readonly CoasterNormalizer $coasterNormalizer
+        private readonly CoasterNormalizer $coasterNormalizer,
+        private readonly PlayerContext $playerContext,
+        private readonly RiddenCoasterService $riddenCoasterService,
     ) {
         $this->lastInteraction = new DateTime();
     }
@@ -76,40 +73,27 @@ class CoasterCompare
     #[LiveAction]
     public function skip(): void
     {
+        $this->persistChoice($this->right['id'], true);
+
         $this->pickNewCoasters();
     }
 
     #[LiveAction]
     public function toggleSeen(#[LiveArg] int $id): void
     {
-        $user = $this->security->getUser();
-        if (!$user instanceof User) {
-            return;
-        }
+        // 1️⃣ Get the current player
+        $player = $this->playerContext->getCurrentPlayer();
 
+        // 2️⃣ Load the coaster
         $coaster = $this->coasterRepository->find($id);
         if (!$coaster) {
             return;
         }
 
-        $riddenCoaster = $this->riddenCoasterRepository->findOneBy([
-            'user' => $user,
-            'coaster' => $coaster,
-        ]);
+        // 3️⃣ Delegate toggle to the service
+        $this->riddenCoasterService->toggle($player, $coaster);
 
-        if ($riddenCoaster) {
-            $this->entityManager->remove($riddenCoaster);
-        } else {
-            $riddenCoaster = new RiddenCoaster();
-            $riddenCoaster->setUser($user);
-            $riddenCoaster->setCoaster($coaster);
-            $riddenCoaster->setRiddenAt(new DateTimeImmutable());
-            $this->entityManager->persist($riddenCoaster);
-        }
-
-        $this->entityManager->flush();
-
-        // Refresh normalized data
+        // 4️⃣ Refresh normalized data
         if (isset($this->left['id']) && $this->left['id'] === $id) {
             $this->left = $this->normalizeCoaster($coaster);
         } elseif (isset($this->right['id']) && $this->right['id'] === $id) {
@@ -117,7 +101,7 @@ class CoasterCompare
         }
     }
 
-    private function persistChoice(int $winnerId): void
+    private function persistChoice(int $winnerId, bool $skip = false): void
     {
         $startMs = (float) $this->lastInteraction->format('Uv');
         $now = new DateTime();
@@ -130,22 +114,27 @@ class CoasterCompare
 
         $coasterA = $this->coasterRepository->find($this->left['id']);
         $coasterB = $this->coasterRepository->find($this->right['id']);
-        $winner = $this->coasterRepository->find($winnerId);
+
+        $winner = null;
+        if (!$skip) {
+            $winner = $this->coasterRepository->find($winnerId);
+        }
 
         if (!$coasterA || !$coasterB || !$winner) {
             return;
         }
 
+        $player = $this->playerContext->getCurrentPlayer();
         $comparison = $this->pairwiseComparisonService->recordComparison(
             $coasterA,
             $coasterB,
             $winner,
-            $this->security->getUser(),
+            $player,
             $responseTimeMs
         );
 
-        $this->eloRatingService->updateRatings($comparison);
-        $this->userCoasterRatingService->applyComparison($comparison);
+        $this->eloRatingService->applyComparison($comparison);
+        $this->playerCoasterRatingService->applyComparison($comparison);
     }
 
     private function pickNewCoasters(): void
@@ -199,7 +188,8 @@ class CoasterCompare
         $left = $this->coasterRepository->find(3);
         $right = $this->coasterRepository->find(2);
 
-        $coasters = $this->matchupSelectionService->getNextMatchup(null);
+        $player = $this->playerContext->getCurrentPlayer();
+        $coasters = $this->matchupSelectionService->getNextMatchup($player);
         $left = $coasters[0];
         $right = $coasters[1];
 
@@ -210,9 +200,9 @@ class CoasterCompare
 
     private function normalizeCoaster(Coaster $coaster): array
     {
-        $user = $this->security->getUser();
+        $player = $this->playerContext->getCurrentPlayer();
 
-        return $this->coasterNormalizer->normalize($coaster, $user, $this->useMetricUnits);
+        return $this->coasterNormalizer->normalize($coaster, $this->useMetricUnits);
     }
 
     private function markFavorites(): void

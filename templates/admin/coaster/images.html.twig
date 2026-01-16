@@ -35,12 +35,24 @@
                         <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                             <div class="card h-100">
 
-                                <img
-                                        src="{{ image }}"
-                                        class="card-img-top"
-                                        style="object-fit: cover; height: 180px;"
-                                        alt="Coaster image"
-                                >
+                                <div class="position-relative">
+                                    <img
+                                            src="{{ image }}"
+                                            class="card-img-top"
+                                            style="object-fit: cover; height: 180px;"
+                                            alt="Coaster image"
+                                    >
+                                    <button
+                                            type="button"
+                                            class="btn btn-sm btn-light position-absolute top-0 end-0 m-2 opacity-75"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#imageModal"
+                                            data-bs-image="{{ image }}"
+                                            title="View full image"
+                                    >
+                                        View
+                                    </button>
+                                </div>
 
                                 <div class="card-body text-center">
                                     <div class="form-check">
@@ -76,4 +88,35 @@
         {% endif %}
 
     </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageModalLabel">Image Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-0">
+                    <img src="" id="modalImage" class="img-fluid" alt="Full size preview">
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const imageModal = document.getElementById('imageModal');
+            if (imageModal) {
+                imageModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const imageUrl = button.getAttribute('data-bs-image');
+                    const modalImage = imageModal.querySelector('#modalImage');
+                    modalImage.src = imageUrl;
+                });
+            }
+        });
+    </script>
 {% endblock %}

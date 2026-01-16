@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Service\Ranking;
+namespace App\Service\PlayerRating;
 
 use App\Entity\Coaster;
 

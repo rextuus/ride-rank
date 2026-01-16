@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Service\Ranking;
+namespace App\Service\PlayerRating;
 
 use App\Entity\Coaster;
 use App\Entity\PairwiseComparison;
-use App\Entity\User;
+use App\Entity\Player;
 use Doctrine\ORM\EntityManagerInterface;
 
 readonly class PairwiseComparisonService
@@ -19,18 +19,21 @@ readonly class PairwiseComparisonService
     public function recordComparison(
         Coaster $coasterA,
         Coaster $coasterB,
-        Coaster $winner,
-        ?User $user = null,
+        ?Coaster $winner,
+        Player $player,
         ?int $responseTimeMs = null
     ): PairwiseComparison {
-        $loser = ($winner->getId() === $coasterA->getId()) ? $coasterB : $coasterA;
+        $loser = null;
+        if ($winner !== null) {
+            $loser = ($winner->getId() === $coasterA->getId()) ? $coasterB : $coasterA;
+        }
 
         $comparison = new PairwiseComparison();
         $comparison->setCoasterA($coasterA);
         $comparison->setCoasterB($coasterB);
         $comparison->setWinner($winner);
         $comparison->setLoser($loser);
-        $comparison->setUser($user);
+        $comparison->setPlayer($player);
         $comparison->setResponseTimeMs($responseTimeMs);
 
         $this->entityManager->persist($comparison);

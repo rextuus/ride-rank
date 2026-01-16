@@ -1,49 +1,70 @@
 <?php
 
-namespace App\Service\Ranking;
+namespace App\Service\PlayerRating;
 
 use App\Entity\Coaster;
 use App\Entity\PairwiseComparison;
-use App\Entity\User;
-use App\Entity\UserCoasterRating;
-use App\Repository\UserCoasterRatingRepository;
+use App\Entity\Player;
+use App\Entity\PlayerCoasterRating;
+use App\Enum\ComparisonOutcome;
+use App\Repository\PlayerCoasterRatingRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
-class UserCoasterRatingService
+class PlayerCoasterRatingService
 {
     private const DEFAULT_RATING = 1200.0;
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly UserCoasterRatingRepository $userCoasterRatingRepository,
+        private readonly PlayerCoasterRatingRepository $playerCoasterRatingRepository,
     ) {
     }
 
     public function applyComparison(PairwiseComparison $comparison): void
     {
-        $user = $comparison->getUser();
+        $player = $comparison->getPlayer(); // assuming you added a player relation
 
-        if ($user === null) {
+        // skipped
+        if ($comparison->getOutcome() === ComparisonOutcome::SKIP){
+            $coasterA = $comparison->getCoasterA();
+            $coasterB  = $comparison->getCoasterB();
+
+            $coasterARating = $this->getOrCreate($player, $coasterA);
+            $coasterBRating  = $this->getOrCreate($player, $coasterB);
+
+            $coasterARating->incrementPresented();
+            $coasterBRating->incrementPresented();
+
+            $coasterARating->incrementSkipped();
+            $coasterBRating->incrementSkipped();
+
+            $this->entityManager->persist($coasterARating);
+            $this->entityManager->persist($coasterBRating);
+            $this->entityManager->flush();
+
             return;
         }
 
         $winner = $comparison->getWinner();
         $loser  = $comparison->getLoser();
 
-        $winnerRating = $this->getOrCreate($user, $winner);
-        $loserRating  = $this->getOrCreate($user, $loser);
+        $winnerRating = $this->getOrCreate($player, $winner);
+        $loserRating  = $this->getOrCreate($player, $loser);
 
         $this->updateRatings($winnerRating, $loserRating);
+
+        $winnerRating->incrementPresented();
+        $loserRating->incrementPresented();
 
         $this->entityManager->persist($winnerRating);
         $this->entityManager->persist($loserRating);
         $this->entityManager->flush();
     }
 
-    private function getOrCreate(User $user, Coaster $coaster): UserCoasterRating
+    private function getOrCreate(Player $player, Coaster $coaster): PlayerCoasterRating
     {
-        $rating = $this->userCoasterRatingRepository->findOneBy([
-            'user' => $user,
+        $rating = $this->playerCoasterRatingRepository->findOneBy([
+            'player' => $player,
             'coaster' => $coaster,
         ]);
 
@@ -51,7 +72,7 @@ class UserCoasterRatingService
             return $rating;
         }
 
-        $rating = new UserCoasterRating($user, $coaster);
+        $rating = new PlayerCoasterRating($player, $coaster);
         $rating->setRating(self::DEFAULT_RATING);
 
         $this->entityManager->persist($rating);
@@ -60,8 +81,8 @@ class UserCoasterRatingService
     }
 
     private function updateRatings(
-        UserCoasterRating $winner,
-        UserCoasterRating $loser
+        PlayerCoasterRating $winner,
+        PlayerCoasterRating $loser
     ): void {
         $expectedWinner = $this->expectedScore(
             $winner->getRating(),
@@ -91,22 +112,10 @@ class UserCoasterRatingService
     {
         $minimumGames = min($gamesA, $gamesB);
 
-        if ($minimumGames < 10) {
-            return 40;
-        }
-
-        if ($minimumGames < 30) {
-            return 24;
-        }
-
-        return 16;
-    }
-
-    /**
-     * @return array<UserCoasterRating>
-     */
-    public function calculateRankingByFilter(RankingFilter $filter): array
-    {
-        return $this->userCoasterRatingRepository->calculateRankingByFilter($filter);
+        return match (true) {
+            $minimumGames < 10 => 40,
+            $minimumGames < 30 => 24,
+            default => 16,
+        };
     }
 }

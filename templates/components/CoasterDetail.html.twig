@@ -1,28 +1,33 @@
 {% set coaster = coasterData %}
 <div {{ attributes }}>
     <div class="coaster-detail-card mb-4">
-        <div class="position-relative coaster-image-wrapper">
-            <img src="{{ coaster.image }}" class="img-fluid rounded" alt="{{ coaster.name }}">
-            <div class="coaster-image-title">
-                <h2 class="mb-0">{{ coaster.name }}</h2>
+        <div class="row g-0">
+            <div class="col-md-5">
+                <div class="position-relative coaster-image-wrapper h-100">
+                    <img src="{{ coaster.image }}" class="img-fluid rounded-start" alt="{{ coaster.name }}">
+                    <div class="coaster-image-title">
+                        <h2 class="mb-0">{{ coaster.name }}</h2>
+                    </div>
+                    <div class="coaster-image-meta">
+                        <span>{{ coaster.park }}</span>
+                        <span class="mx-1">–</span>
+                        <em>{{ coaster.country }}</em>
+                    </div>
+                    {% if coaster.isSeen %}
+                        <span class="badge common-ridden-badge position-absolute top-0 end-0 m-2">
+                            Gefahren
+                        </span>
+                    {% endif %}
+                </div>
             </div>
-            <div class="coaster-image-meta">
-                <span>{{ coaster.park }}</span>
-                <span class="mx-1">–</span>
-                <em>{{ coaster.country }}</em>
-            </div>
-            {% if coaster.isSeen %}
-                <span class="badge common-ridden-badge position-absolute top-0 end-0 m-2">
-                    Gefahren
-                </span>
-            {% endif %}
-        </div>
-
-        <div class="mt-4">
-            <h5 class="mb-3">Technische Daten</h5>
-            <div class="coaster-stats-wrapper">
-                {% import 'macros/_coaster_stats.html.twig' as coasterStats %}
-                {{ coasterStats.stats(coaster.track) }}
+            <div class="col-md-7">
+                <div class="p-3">
+                    <h5 class="mb-3">Technische Daten</h5>
+                    <div class="coaster-stats-wrapper">
+                        {% import 'macros/_coaster_stats.html.twig' as coasterStats %}
+                        {{ coasterStats.stats(coaster.track) }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>

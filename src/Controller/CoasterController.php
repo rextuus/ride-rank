@@ -23,7 +23,7 @@ final class CoasterController extends AbstractController
     #[Route('/coaster/{coaster}', name: 'app_coaster_show')]
     public function show(Coaster $coaster): Response
     {
-        $coaster = $this->coasterNormalizer->normalize($coaster, $this->getUser());
+        $coaster = $this->coasterNormalizer->normalize($coaster);
 
         return $this->render('coaster/detail.html.twig', [
             'coaster' => $coaster,

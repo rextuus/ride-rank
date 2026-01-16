@@ -9,6 +9,10 @@ use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: RiddenCoasterRepository::class)]
+#[ORM\UniqueConstraint(
+    name: 'uniq_ridden_player_coaster',
+    columns: ['player_id', 'coaster_id']
+)]
 class RiddenCoaster
 {
     #[ORM\Id]
@@ -16,31 +20,38 @@ class RiddenCoaster
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'riddenCoasters')]
-    #[ORM\JoinColumn(nullable: false)]
-    private User $user;
+    #[ORM\ManyToOne(targetEntity: Player::class, inversedBy: 'riddenCoasters')]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    private Player $player;
 
     #[ORM\ManyToOne(targetEntity: Coaster::class)]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private Coaster $coaster;
 
+    #[ORM\Column(type: 'boolean')]
+    private bool $ridden;
+
     #[ORM\Column(type: 'datetime_immutable')]
-    private DateTimeImmutable $riddenAt;
+    private DateTimeImmutable $createdAt;
+
+    public function __construct()
+    {
+        $this->createdAt = new DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getUser(): User
+    public function getPlayer(): Player
     {
-        return $this->user;
+        return $this->player;
     }
 
-    public function setUser(User $user): static
+    public function setPlayer(Player $player): static
     {
-        $this->user = $user;
-
+        $this->player = $player;
         return $this;
     }
 
@@ -52,19 +63,22 @@ class RiddenCoaster
     public function setCoaster(Coaster $coaster): static
     {
         $this->coaster = $coaster;
-
         return $this;
     }
 
-    public function getRiddenAt(): DateTimeImmutable
+    public function isRidden(): bool
     {
-        return $this->riddenAt;
+        return $this->ridden;
     }
 
-    public function setRiddenAt(DateTimeImmutable $riddenAt): static
+    public function setRidden(bool $ridden): static
     {
-        $this->riddenAt = $riddenAt;
-
+        $this->ridden = $ridden;
         return $this;
+    }
+
+    public function getCreatedAt(): DateTimeImmutable
+    {
+        return $this->createdAt;
     }
 }

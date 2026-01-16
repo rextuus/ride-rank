@@ -6,10 +6,12 @@ namespace App\Service\Rating;
 
 use App\Entity\Coaster;
 use App\Entity\PairwiseComparison;
+use App\Entity\Player;
+use App\Entity\PlayerCoasterAffinity;
 use App\Entity\RiddenCoaster;
-use App\Entity\User;
-use App\Entity\UserCoasterAffinity;
-use App\Repository\UserCoasterAffinityRepository;
+use App\Entity\PlayerCoasterRating;
+use App\Enum\ComparisonOutcome;
+use App\Repository\PlayerCoasterAffinityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 class EloRatingService
@@ -22,80 +24,99 @@ class EloRatingService
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
-        private readonly UserCoasterAffinityRepository $affinityRepository
+        private readonly PlayerCoasterAffinityRepository $affinityRepository
     ) {
     }
 
     /**
-     * Updates coaster ratings and user affinity based on a pairwise comparison.
+     * Updates player-specific coaster ratings and affinities based on a comparison.
      */
-    public function updateRatings(PairwiseComparison $comparison): void
+    public function applyComparison(PairwiseComparison $comparison): void
     {
-        $winner = $comparison->getWinner();
-        $loser = $comparison->getLoser();
-
-        if (!$winner || !$loser) {
+        if ($comparison->getOutcome() === ComparisonOutcome::SKIP){
             return;
         }
 
-        $ratingWinner = $winner->getRating();
-        $ratingLoser = $loser->getRating();
+        $winner = $comparison->getWinner();
+        $loser = $comparison->getLoser();
+        $player = $comparison->getPlayer();
 
-        // Compute expected win probabilities using the Elo formula:
-        // EA = 1 / (1 + 10 ^ ((RB - RA) / 400))
-        $expectedWinner = 1.0 / (1.0 + 10.0 ** (($ratingLoser - $ratingWinner) / 400.0));
-        $expectedLoser = 1.0 / (1.0 + 10.0 ** (($ratingWinner - $ratingLoser) / 400.0));
+//        // --- Get or create player-specific ratings ---
+//        $winnerRating = $this->getOrCreateRating($player, $winner);
+//        $loserRating  = $this->getOrCreateRating($player, $loser);
+//
+//        // --- Calculate expected score for ELO ---
+//        $expectedWinner = 1 / (1 + 10 ** (($loserRating->getRating() - $winnerRating->getRating()) / 400));
+//        $expectedLoser  = 1 / (1 + 10 ** (($winnerRating->getRating() - $loserRating->getRating()) / 400));
+//
+//        $knowledgeFactor = $this->calculateKnowledgeFactor($player, $winner, $loser);
+//
+//        $kWinner = (self::BASE_K / sqrt($winnerRating->getGamesPlayed() + 1)) * $knowledgeFactor;
+//        $kLoser  = (self::BASE_K / sqrt($loserRating->getGamesPlayed() + 1)) * $knowledgeFactor;
 
-        // Use a dynamic K-factor:
-        // Effective K = BaseK / sqrt(comparisonsCount + 1)
-        $user = $comparison->getUser();
-        $knowledgeFactor = 1.0;
+        // --- Update player-specific ratings ---
+//        $winnerRating->setRating($winnerRating->getRating() + $kWinner * (1 - $expectedWinner));
+//        $loserRating->setRating($loserRating->getRating() + $kLoser * (0 - $expectedLoser));
+//        $winnerRating->incrementGamesPlayed();
+//        $winnerRating->incrementWins();
+//        $loserRating->incrementGamesPlayed();
+//        $loserRating->incrementLosses();
 
-        if ($user !== null) {
-            $knowledgeFactor = $this->calculateKnowledgeFactor($user, $winner, $loser);
-        }
+        // --- Update global Coaster stats (anchor selection relies on this) ---
+        $knowledgeFactor = $this->calculateKnowledgeFactor($player, $winner, $loser);
 
-        // Use a dynamic K-factor with knowledge scaling (knowledge is not: User have marked coaster as ridden)
+        $winner->setComparisonsCount($winner->getComparisonsCount() + 1);
+        $loser->setComparisonsCount($loser->getComparisonsCount() + 1);
+
+        // Simple global ELO adjustment: we can use the same formula, but based on global rating
+        $globalExpectedWinner = 1 / (1 + 10 ** (($loser->getRating() - $winner->getRating()) / 400));
+        $globalExpectedLoser = 1 / (1 + 10 ** (($winner->getRating() - $loser->getRating()) / 400));
+
         $kWinner = (self::BASE_K / sqrt($winner->getComparisonsCount() + 1)) * $knowledgeFactor;
         $kLoser = (self::BASE_K / sqrt($loser->getComparisonsCount() + 1)) * $knowledgeFactor;
 
+        $winner->setRating($winner->getRating() + $kWinner * (1 - $globalExpectedWinner));
+        $loser->setRating($loser->getRating() + $kLoser * (0 - $globalExpectedLoser));
 
-        // Update ratings: R' = R + K * (S - E)
-        // For winner, S = 1. For loser, S = 0.
-        $newRatingWinner = $ratingWinner + $kWinner * (1.0 - $expectedWinner);
-        $newRatingLoser = $ratingLoser + $kLoser * (0.0 - $expectedLoser);
+        // --- Update player affinity ---
+        $this->updatePlayerAffinity($player, $winner, true);
+        $this->updatePlayerAffinity($player, $loser, false);
 
-        $winner->setRating($newRatingWinner);
-        $winner->setComparisonsCount($winner->getComparisonsCount() + 1);
-
-        $loser->setRating($newRatingLoser);
-        $loser->setComparisonsCount($loser->getComparisonsCount() + 1);
-
-        $user = $comparison->getUser();
-        if ($user !== null) {
-            $this->updateUserAffinity($user, $winner, true);
-            $this->updateUserAffinity($user, $loser, false);
-        }
-
+        // --- Persist everything ---
+//        $this->entityManager->persist($winnerRating);
+//        $this->entityManager->persist($loserRating);
         $this->entityManager->persist($winner);
         $this->entityManager->persist($loser);
         $this->entityManager->flush();
     }
 
-    /**
-     * Updates or creates UserCoasterAffinity for a user and a coaster.
-     */
-    private function updateUserAffinity(User $user, Coaster $coaster, bool $isWinner): void
+    private function getOrCreateRating(Player $player, Coaster $coaster): PlayerCoasterRating
+    {
+        $ratingRepo = $this->entityManager->getRepository(PlayerCoasterRating::class);
+        $rating = $ratingRepo->findOneBy([
+            'player' => $player,
+            'coaster' => $coaster,
+        ]);
+
+        if ($rating) {
+            return $rating;
+        }
+
+        $rating = new PlayerCoasterRating($player, $coaster);
+        $this->entityManager->persist($rating);
+
+        return $rating;
+    }
+
+    private function updatePlayerAffinity(Player $player, Coaster $coaster, bool $isWinner): void
     {
         $affinity = $this->affinityRepository->findOneBy([
-            'user' => $user,
+            'player' => $player,
             'coaster' => $coaster,
         ]);
 
         if (!$affinity) {
-            $affinity = new UserCoasterAffinity();
-            $affinity->setUser($user);
-            $affinity->setCoaster($coaster);
+            $affinity = new PlayerCoasterAffinity($player, $coaster);
         }
 
         $affinity->setExposureCount($affinity->getExposureCount() + 1);
@@ -108,22 +129,18 @@ class EloRatingService
             $newScore = $affinity->getConfidenceScore() + self::CONFIDENCE_LOSS;
         }
 
-        // Clamp confidenceScore to a reasonable range
-        $clampedScore = max(self::CONFIDENCE_MIN, min(self::CONFIDENCE_MAX, $newScore));
-        $affinity->setConfidenceScore($clampedScore);
-
+        $affinity->setConfidenceScore(max(self::CONFIDENCE_MIN, min(self::CONFIDENCE_MAX, $newScore)));
         $affinity->setLastSeenAt(new \DateTimeImmutable());
 
         $this->entityManager->persist($affinity);
     }
 
-    private function userKnowsCoaster(User $user, Coaster $coaster): bool
+    private function playerKnowsCoaster(Player $player, Coaster $coaster): bool
     {
-        // 1️⃣ If user has ridden it, full knowledge
         $ridden = $this->entityManager
             ->getRepository(RiddenCoaster::class)
             ->findOneBy([
-                'user' => $user,
+                'player' => $player,
                 'coaster' => $coaster,
             ]);
 
@@ -131,9 +148,8 @@ class EloRatingService
             return true;
         }
 
-        // 2️⃣ Fallback to UserCoasterAffinity
         $affinity = $this->affinityRepository->findOneBy([
-            'user' => $user,
+            'player' => $player,
             'coaster' => $coaster,
         ]);
 
@@ -141,20 +157,13 @@ class EloRatingService
             return false;
         }
 
-        if ($affinity->getExposureCount() >= 3) {
-            return true;
-        }
-        if (abs($affinity->getConfidenceScore()) >= 2.0) {
-            return true;
-        }
-
-        return false;
+        return $affinity->getExposureCount() >= 3 || abs($affinity->getConfidenceScore()) >= 2.0;
     }
 
-    private function calculateKnowledgeFactor(User $user, Coaster $winner, Coaster $loser): float
+    private function calculateKnowledgeFactor(Player $player, Coaster $winner, Coaster $loser): float
     {
-        $knowsWinner = $this->userKnowsCoaster($user, $winner);
-        $knowsLoser = $this->userKnowsCoaster($user, $loser);
+        $knowsWinner = $this->playerKnowsCoaster($player, $winner);
+        $knowsLoser = $this->playerKnowsCoaster($player, $loser);
 
         if ($knowsWinner && $knowsLoser) {
             return 1.0;

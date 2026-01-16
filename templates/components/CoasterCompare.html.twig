@@ -27,14 +27,13 @@
             </div>
             <div class="card-footer p-1 bg-transparent border-0">
                 {% set buttonClass = coaster.isSeen ? 'btn-success' : 'btn-danger' %}
-                {% if not app.user %}
-                    {% set buttonClass = 'btn-secondary' %}
-                {% endif %}
+{#                {% if not app.user %}#}
+{#                    {% set buttonClass = 'btn-secondary' %}#}
+{#                {% endif %}#}
                 <button class="btn ridden-btn {{ buttonClass }} w-100"
                         data-action="click->live#action"
                         data-live-action-param="toggleSeen"
                         data-live-id-param="{{ coaster.id }}"
-                        {% if not app.user %}disabled title="Login zum Markieren"{% endif %}
                         onclick="event.stopPropagation();">
                     {{ ux_icon(coaster.isSeen ? 'lucide:check-circle' : 'lucide:circle', {style: 'height: 1.2em; width: 1.2em;'}) }}
                     {{ coaster.isSeen ? 'Gefahren' : 'Nicht gefahren' }}
